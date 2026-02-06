@@ -1,21 +1,263 @@
-import{SECURE_DATA}from'./quiz_data.js';const SALT="Daymon_Is_The_Best_Streamer_2026_VoTV";const FAKE_TOTAL_QUESTIONS=211;const SFX={hover:new Audio('../assets/hover.wav'),click:new Audio('../assets/click.wav'),select:new Audio('../assets/select.wav'),win:new Audio('../assets/levelup.wav'),lose:new Audio('../assets/gameover.wav'),whoosh:new Audio('../assets/whoosh.wav')};const bgMusic=new Audio('../assets/quiz-bg.wav');bgMusic.loop=true;bgMusic.volume=0.15;Object.values(SFX).forEach(s=>{s.load();s.volume=0.3;});SFX.hover.volume=0.15;let currentQuestionIndex=0;let score=0;let shuffledQuestions=[];const screens={start:document.getElementById('start-screen'),game:document.getElementById('game-screen'),result:document.getElementById('result-screen')};const ui={qCurrent:document.getElementById('q-current'),qTotal:document.getElementById('q-total'),qText:document.getElementById('question-text'),qDiff:document.getElementById('q-difficulty'),options:document.getElementById('options-container'),scorePercent:document.getElementById('score-percent'),scoreCircle:document.getElementById('score-circle'),rankTitle:document.getElementById('rank-title'),correctCount:document.getElementById('correct-count'),wrongCount:document.getElementById('wrong-count')};document.addEventListener('DOMContentLoaded',()=>{document.getElementById('start-btn').addEventListener('click',startGame);document.getElementById('restart-btn').addEventListener('click',resetGame);setupHoverSounds();ui.qTotal.textContent=FAKE_TOTAL_QUESTIONS;});function setupHoverSounds(){const buttons=document.querySelectorAll('button, .back-btn');buttons.forEach(btn=>{btn.addEventListener('mouseenter',()=>playSound('hover'));});}
-function playSound(key){if(SFX[key]){const sound=SFX[key].cloneNode();sound.volume=SFX[key].volume;sound.play().catch(()=>{});}}
-function showScreen(screenName){Object.values(screens).forEach(s=>s.classList.remove('active'));screens[screenName].classList.add('active');}
-function decodeText(str){try{return decodeURIComponent(atob(str).split('').map(function(c){return'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2);}).join(''));}catch(e){return"Error decoding";}}
-async function hashAnswer(text){const raw=text.trim()+SALT;const msgBuffer=new TextEncoder().encode(raw);const hashBuffer=await crypto.subtle.digest('SHA-256',msgBuffer);const hashArray=Array.from(new Uint8Array(hashBuffer));return hashArray.map(b=>b.toString(16).padStart(2,'0')).join('');}
-function shuffleArray(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}
-return array;}
-function startGame(){playSound('whoosh');bgMusic.currentTime=0;bgMusic.play().catch(()=>{});currentQuestionIndex=0;score=0;const charQ=SECURE_DATA.find(q=>q.id==='char');const lifeQ=SECURE_DATA.find(q=>q.id==='life');let pool=SECURE_DATA.filter(q=>q.id!=='char'&&q.id!=='life');pool=shuffleArray(pool);const insertIndex=Math.floor(Math.random()*(pool.length+1));pool.splice(insertIndex,0,charQ,lifeQ);shuffledQuestions=pool;showScreen('game');loadQuestion();}
-function loadQuestion(){const q=shuffledQuestions[currentQuestionIndex];ui.qCurrent.textContent=currentQuestionIndex+1;ui.qText.textContent=decodeText(q.q);let diffColor='#22c55e';let diffText='EASY';if(q.d>=3){diffColor='#f59e0b';diffText='MEDIUM';}
-if(q.d>=5){diffColor='#ef4444';diffText='HARD';}
-if(q.d>=6){diffColor='#a855f7';diffText='INSANE';}
-ui.qDiff.textContent=diffText;ui.qDiff.style.borderColor=diffColor;ui.qDiff.style.color=diffColor;ui.options.innerHTML='';const decodedOpts=q.opts.map(opt=>decodeText(opt));const shuffledOpts=shuffleArray([...decodedOpts]);shuffledOpts.forEach(optText=>{const btn=document.createElement('button');btn.className='option-btn';btn.textContent=optText;btn.onmouseenter=()=>playSound('hover');btn.onclick=()=>handleAnswer(btn,optText,q.h);ui.options.appendChild(btn);});}
-async function handleAnswer(btn,selectedText,correctHash){const allBtns=ui.options.querySelectorAll('.option-btn');allBtns.forEach(b=>b.disabled=true);btn.classList.add('selected');playSound('select');const playerHash=await hashAnswer(selectedText);if(playerHash===correctHash){score++;}
-setTimeout(()=>{currentQuestionIndex++;if(currentQuestionIndex<shuffledQuestions.length){loadQuestion();}else{finishGame();}},600);}
-function finishGame(){showScreen('result');bgMusic.pause();const percent=Math.round((score/shuffledQuestions.length)*100);const wrong=shuffledQuestions.length-score;ui.correctCount.textContent=score;ui.wrongCount.textContent=wrong;ui.qCurrent.textContent=FAKE_TOTAL_QUESTIONS;animateValue(ui.scorePercent,0,percent,1500);let color='#ef4444';let rank='ЧУШПАН';let finalSound='lose';if(percent>=20){color='#f97316';rank='НЬЮФАГ';}
-if(percent>=50){color='#f59e0b';rank='ОЛД';finalSound='win';}
-if(percent>=80){color='#22c55e';rank='ЛЕГЕНДА';finalSound='win';}
-if(percent===100){color='#a855f7';rank='DAYMON MONTAGE';finalSound='win';}
-setTimeout(()=>playSound(finalSound),500);ui.rankTitle.textContent=rank;ui.rankTitle.style.color=color;ui.rankTitle.style.textShadow=`0 0 15px ${color}`;setTimeout(()=>{ui.scoreCircle.classList.add('animating');ui.scoreCircle.style.background=`conic-gradient(${color}${percent}%,#333 ${percent}%)`;ui.scoreCircle.style.boxShadow=`0 0 30px ${color}`;},100);}
-function resetGame(){playSound('click');ui.scoreCircle.classList.remove('animating');ui.scoreCircle.style.background=`conic-gradient(#333 0%,#333 0%)`;ui.scoreCircle.style.boxShadow=`0 0 30px rgba(0,0,0,0.5)`;ui.qCurrent.textContent="1";startGame();}
-function animateValue(obj,start,end,duration){let startTimestamp=null;const step=(timestamp)=>{if(!startTimestamp)startTimestamp=timestamp;const progress=Math.min((timestamp-startTimestamp)/duration,1);obj.innerHTML=Math.floor(progress*(end-start)+start)+"%";if(progress<1){window.requestAnimationFrame(step);}};window.requestAnimationFrame(step);}
+/*
+ * LORE QUIZ LOGIC (SECURE MODE)
+ * Daymon Arcade System
+ */
+
+// Импортируем зашифрованную базу
+import { SECURE_DATA } from './quiz_data.js';
+
+// === СЕКРЕТНАЯ СОЛЬ (Должна совпадать с Python скриптом) ===
+const SALT = "Daymon_Is_The_Best_Streamer_2026_VoTV";
+
+// === ПРАНК: ФЕЙКОВОЕ КОЛИЧЕСТВО ВОПРОСОВ ===
+const FAKE_TOTAL_QUESTIONS = 211; 
+
+// === ЗВУКОВАЯ СИСТЕМА ===
+const SFX = {
+    hover: new Audio('../assets/hover.wav'),
+    click: new Audio('../assets/click.wav'),
+    select: new Audio('../assets/select.wav'),
+    win: new Audio('../assets/levelup.wav'),
+    lose: new Audio('../assets/gameover.wav'),
+    whoosh: new Audio('../assets/whoosh.wav')
+};
+
+// Добавляем музыку
+const bgMusic = new Audio('../assets/quiz-bg.wav');
+bgMusic.loop = true;
+bgMusic.volume = 0.15;
+
+// Предзагрузка SFX
+Object.values(SFX).forEach(s => {
+    s.load();
+    s.volume = 0.3;
+});
+SFX.hover.volume = 0.15;
+
+// Состояние
+let currentQuestionIndex = 0;
+let score = 0;
+let shuffledQuestions = [];
+
+// DOM Elements
+const screens = {
+    start: document.getElementById('start-screen'),
+    game: document.getElementById('game-screen'),
+    result: document.getElementById('result-screen')
+};
+
+const ui = {
+    qCurrent: document.getElementById('q-current'),
+    qTotal: document.getElementById('q-total'),
+    qText: document.getElementById('question-text'),
+    qDiff: document.getElementById('q-difficulty'),
+    options: document.getElementById('options-container'),
+    scorePercent: document.getElementById('score-percent'),
+    scoreCircle: document.getElementById('score-circle'),
+    rankTitle: document.getElementById('rank-title'),
+    correctCount: document.getElementById('correct-count'),
+    wrongCount: document.getElementById('wrong-count')
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('start-btn').addEventListener('click', startGame);
+    document.getElementById('restart-btn').addEventListener('click', resetGame);
+    setupHoverSounds();
+    ui.qTotal.textContent = FAKE_TOTAL_QUESTIONS;
+});
+
+function setupHoverSounds() {
+    const buttons = document.querySelectorAll('button, .back-btn');
+    buttons.forEach(btn => {
+        btn.addEventListener('mouseenter', () => playSound('hover'));
+    });
+}
+
+function playSound(key) {
+    if (SFX[key]) {
+        const sound = SFX[key].cloneNode();
+        sound.volume = SFX[key].volume;
+        sound.play().catch(() => {});
+    }
+}
+
+function showScreen(screenName) {
+    Object.values(screens).forEach(s => s.classList.remove('active'));
+    screens[screenName].classList.add('active');
+}
+
+// === КРИПТОГРАФИЯ (ДЕКОДЕРЫ) ===
+
+// 1. Декодирование Base64 (чтобы показать текст на экране)
+function decodeText(str) {
+    try {
+        // Поддержка кириллицы через decodeURIComponent
+        return decodeURIComponent(atob(str).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+    } catch (e) {
+        return "Error decoding";
+    }
+}
+
+// 2. Хеширование ответа (SHA-256)
+async function hashAnswer(text) {
+    const raw = text.trim() + SALT;
+    const msgBuffer = new TextEncoder().encode(raw);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Функция перемешивания
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+function startGame() {
+    playSound('whoosh');
+    
+    bgMusic.currentTime = 0;
+    bgMusic.play().catch(() => {});
+
+    currentQuestionIndex = 0;
+    score = 0;
+    
+    // Логика связанных вопросов
+    const charQ = SECURE_DATA.find(q => q.id === 'char');
+    const lifeQ = SECURE_DATA.find(q => q.id === 'life');
+    
+    let pool = SECURE_DATA.filter(q => q.id !== 'char' && q.id !== 'life');
+    pool = shuffleArray(pool);
+    
+    const insertIndex = Math.floor(Math.random() * (pool.length + 1));
+    pool.splice(insertIndex, 0, charQ, lifeQ);
+    
+    shuffledQuestions = pool;
+    
+    showScreen('game');
+    loadQuestion();
+}
+
+function loadQuestion() {
+    const q = shuffledQuestions[currentQuestionIndex];
+    
+    ui.qCurrent.textContent = currentQuestionIndex + 1;
+    
+    // ДЕКОДИРУЕМ ВОПРОС ПЕРЕД ПОКАЗОМ
+    ui.qText.textContent = decodeText(q.q);
+    
+    let diffColor = '#22c55e';
+    let diffText = 'EASY';
+    if(q.d >= 3) { diffColor = '#f59e0b'; diffText = 'MEDIUM'; }
+    if(q.d >= 5) { diffColor = '#ef4444'; diffText = 'HARD'; }
+    if(q.d >= 6) { diffColor = '#a855f7'; diffText = 'INSANE'; }
+    
+    ui.qDiff.textContent = diffText;
+    ui.qDiff.style.borderColor = diffColor;
+    ui.qDiff.style.color = diffColor;
+
+    ui.options.innerHTML = '';
+    
+    // ДЕКОДИРУЕМ ВАРИАНТЫ ОТВЕТОВ
+    const decodedOpts = q.opts.map(opt => decodeText(opt));
+    const shuffledOpts = shuffleArray([...decodedOpts]);
+
+    shuffledOpts.forEach(optText => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = optText;
+        
+        btn.onmouseenter = () => playSound('hover');
+        
+        // Передаем текст ответа и ХЕШ правильного ответа
+        btn.onclick = () => handleAnswer(btn, optText, q.h);
+        ui.options.appendChild(btn);
+    });
+}
+
+async function handleAnswer(btn, selectedText, correctHash) {
+    const allBtns = ui.options.querySelectorAll('.option-btn');
+    allBtns.forEach(b => b.disabled = true);
+
+    btn.classList.add('selected');
+    playSound('select'); 
+
+    // ХЕШИРУЕМ ВЫБОР ИГРОКА И СРАВНИВАЕМ С ХЕШЕМ В БАЗЕ
+    const playerHash = await hashAnswer(selectedText);
+
+    if (playerHash === correctHash) {
+        score++;
+    }
+
+    setTimeout(() => {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < shuffledQuestions.length) {
+            loadQuestion();
+        } else {
+            finishGame();
+        }
+    }, 600);
+}
+
+function finishGame() {
+    showScreen('result');
+    bgMusic.pause();
+    
+    const percent = Math.round((score / shuffledQuestions.length) * 100);
+    const wrong = shuffledQuestions.length - score;
+
+    ui.correctCount.textContent = score;
+    ui.wrongCount.textContent = wrong;
+    
+    ui.qCurrent.textContent = FAKE_TOTAL_QUESTIONS;
+    
+    animateValue(ui.scorePercent, 0, percent, 1500);
+
+    let color = '#ef4444';
+    let rank = 'ЧУШПАН';
+    let finalSound = 'lose';
+    
+    if (percent >= 20) { color = '#f97316'; rank = 'НЬЮФАГ'; }
+    if (percent >= 50) { color = '#f59e0b'; rank = 'ОЛД'; finalSound = 'win'; }
+    if (percent >= 80) { color = '#22c55e'; rank = 'ЛЕГЕНДА'; finalSound = 'win'; }
+    if (percent === 100) { color = '#a855f7'; rank = 'DAYMON MONTAGE'; finalSound = 'win'; }
+
+    setTimeout(() => playSound(finalSound), 500);
+
+    ui.rankTitle.textContent = rank;
+    ui.rankTitle.style.color = color;
+    ui.rankTitle.style.textShadow = `0 0 15px ${color}`;
+
+    setTimeout(() => {
+        ui.scoreCircle.classList.add('animating');
+        ui.scoreCircle.style.background = `conic-gradient(${color} ${percent}%, #333 ${percent}%)`;
+        ui.scoreCircle.style.boxShadow = `0 0 30px ${color}`;
+    }, 100);
+}
+
+function resetGame() {
+    playSound('click');
+    ui.scoreCircle.classList.remove('animating');
+    ui.scoreCircle.style.background = `conic-gradient(#333 0%, #333 0%)`;
+    ui.scoreCircle.style.boxShadow = `0 0 30px rgba(0,0,0,0.5)`;
+    ui.qCurrent.textContent = "1";
+    startGame();
+}
+
+function animateValue(obj, start, end, duration) {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        obj.innerHTML = Math.floor(progress * (end - start) + start) + "%";
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    window.requestAnimationFrame(step);
+}
