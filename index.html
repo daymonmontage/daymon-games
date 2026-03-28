@@ -1,1 +1,414 @@
-<!DOCTYPE html><html lang=ru><head><meta charset=UTF-8><meta name=viewport content="width=device-width, initial-scale=1.0"><title>Daymon Arcade | Игровой зал</title><link href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css rel=stylesheet><link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Montserrat:wght@400;700;900&display=swap" rel=stylesheet><link rel=stylesheet href=style.css><script src=https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2></script></head><body><div id=arcade-loader><div class=loader-scanlines></div><div class=loader-content><div class=sys-header><span class=sys-name>DAYMON_OS <span style=color:#f97316>v.1.0.5</span></span><span class=sys-mem>MEM: 64KB OK</span></div><div class=logo-glitch-wrapper><h1 class=loader-title data-text=ARCADE_SYSTEM>ARCADE_SYSTEM</h1></div><div class=boot-log-container><div id=boot-log class=boot-log></div></div><div class=progress-wrapper><div class=progress-label>LOADING RESOURCES...</div><div class=retro-bar-track><div id=loader-bar class=retro-bar-fill></div></div><div class=percentage id=loader-percent>0%</div></div></div></div><div class=crt-lines></div><div class=vignette></div><nav class=arcade-nav><div class=nav-left><a href=https://daymonmontage.github.io/daymon-site/ class=back-btn><i class="fas fa-arrow-left"></i> НАЗАД В ХАБ </a><div class=hub-sound-controls><button id=hub-mute-btn class=icon-btn title=Звук><i class="fas fa-volume-up"></i></button></div></div><div id=player-status class=player-status><div class=credits-box><i class="fas fa-coins"></i> <span id=credits-val>ВСТАВЬТЕ МОНЕТУ</span></div><div id=auth-ui class="auth-ui guest"><div class=auth-info><span class=player-name>ГОСТЬ</span><div class=player-avatar>?</div></div><button id=top-logout-btn class=logout-icon-btn title=Выйти><i class="fas fa-sign-out-alt"></i></button></div></div></nav><main class=arcade-container><header class=arcade-header><h1 class=neon-title data-text="ИГРОВОЙ ЗАЛ">ИГРОВОЙ ЗАЛ</h1><p class=subtitle>СИСТЕМА РАЗВЛЕЧЕНИЙ</p></header><div class=games-grid><div class=game-card id=game-flappy><div class=card-image style="background: linear-gradient(to bottom, #f97316, #000);"><div class=overlay><i class="fas fa-dove"></i></div></div><div class=card-content><h3>Flappy Streamer</h3><p>Управляй банкой Gorilla и уворачивайся от Деймона!</p><a href=flappy/index.html class=play-btn>ИГРАТЬ</a><div class=mini-leaderboard id=flappy-top-3><div class=ml-header>🏆 ТОП-3 ЛИДЕРА</div><div class=ml-list><div class=ml-loading>Загрузка...</div></div><button id=open-hub-lb class=details-btn>ПОДРОБНЕЕ</button></div></div></div><div class=game-card id=game-quiz><div class=card-image style="background: linear-gradient(to bottom, #8b5cf6, #000);"><div class=overlay><i class="fas fa-brain"></i></div></div><div class=card-content><h3>Lore Quiz</h3><p>Насколько хорошо ты знаешь лор?</p><a href=quiz/index.html class=play-btn>НАЧАТЬ ТЕСТ</a></div></div></main><div id=hub-lb-modal class=lb-modal-overlay><div class=lb-modal-content><div class=lb-modal-header><h2>ТАБЛИЦА ЛИДЕРОВ</h2><button id=close-hub-lb class=close-modal-btn>&times;</button></div><div class=lb-modal-body><div id=hub-full-list class=full-lb-list> Загрузка... </div></div></div></div><div id=auth-lock-screen class=auth-overlay><div class=lock-container><div class=lock-icon><i class="fas fa-lock"></i></div><h2 class=lock-title>ДОСТУП ОГРАНИЧЕН</h2><p class=lock-desc> Игровая зона Daymon Arcade доступна только авторизованным сотрудникам. </p><button id=overlay-login-btn class=discord-btn-large><i class="fab fa-discord"></i> ВОЙТИ ЧЕРЕЗ DISCORD </button><div class=lock-footer>SYSTEM_ID: GUEST_USER // ACCESS_DENIED</div></div></div><script type=module src=script.js></script></body></html>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DaymonMontage | Streamer Hub</title>
+    
+    <link rel="icon" href="/daymon-site/favicon.ico" sizes="any">
+    <link rel="icon" href="assets/favicon.png?v=3" type="image/png">
+    <link rel="shortcut icon" href="assets/favicon.png?v=3" type="image/png">
+    <link rel="apple-touch-icon" href="assets/favicon.png?v=3">
+    <link rel="manifest" href="manifest.json">
+
+    <meta name="description" content="Официальный хаб стримера DaymonMontage.">
+    <meta name="theme-color" content="#f97316">
+
+    <meta property="og:title" content="DaymonMontage | Hub">
+    <meta property="og:description" content="Официальный хаб: стримы, конфиг ПК, донаты.">
+    <meta property="og:image" content="https://daymonmontage.github.io/daymon-site/assets/preview.png">
+    <meta property="og:url" content="https://daymonmontage.github.io/daymon-site/">
+    <meta property="og:type" content="website">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="https://embed.twitch.tv/embed/v1.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <!-- HUD CONTROLS (Top Left) -->
+    <div class="hud-controls">
+        <div id="music-toggle" class="hud-btn muted" title="Music On/Off">
+            <i class="fas fa-music"></i> <span>OST</span>
+        </div>
+        <div id="sfx-toggle" class="hud-btn" title="SFX On/Off">
+            <i class="fas fa-volume-up"></i> <span>SFX</span>
+        </div>
+    </div>
+
+    <!-- AUTH CONTROL (Top Right) -->
+    <div id="auth-wrapper" class="auth-container-fixed">
+        <button id="login-btn" class="auth-btn discord-login not-logged-in">
+            <i class="fab fa-discord"></i> <span>Войти</span>
+        </button>
+        
+        <div id="user-profile" class="user-profile-fixed" style="display: none;">
+            <div class="user-info-box">
+                <img id="user-avatar" src="" alt="User">
+                <span id="user-name">User</span>
+            </div>
+            <button id="logout-btn" class="logout-btn-fixed" title="Выйти">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+
+        <!-- АЛЕРТ О ПОДПИСКЕ (Перемещен внутрь контейнера) -->
+        <div id="discord-join-alert" class="discord-alert" style="display: none;">
+            <div class="da-content">
+                <i class="fab fa-discord da-icon"></i>
+                <div class="da-text">
+                    <span>Вы не на сервере!</span>
+                    <small>Зайди, чтобы не быть чушпаном.</small>
+                </div>
+            </div>
+            <a href="https://discord.gg/UtGPrFT2Es" target="_blank" class="da-join-btn">Вступить</a>
+        </div>
+    </div>
+
+    <!-- PRELOADER -->
+    <div id="preloader">
+        <div class="loader-content">
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring-inner"></div>
+            <p class="loader-text">INITIALIZING</p>
+        </div>
+    </div>
+
+    <!-- BACKGROUND EFFECTS -->
+    <div class="glow-orb orb-primary"></div>
+    <div class="glow-orb orb-secondary"></div>
+
+    <main class="main-container">
+        
+        <!-- HEADER -->
+        <header class="profile-header">
+            <div class="avatar-container">
+                <img src="assets/avatar.png" alt="DaymonMontage" class="avatar-img">
+            </div>
+            
+            <!-- Скрытый блок счетчика (Easter Egg) -->
+            <div id="click-counter-wrapper">
+                <div class="click-badge">CLICKS: <span id="click-val">0</span></div>
+                <button id="reset-clicks" class="reset-clicks-btn" title="Сбросить"><i class="fas fa-trash"></i></button>
+            </div>
+            
+            <h1 class="glitch-title" data-text="DaymonMontage">DaymonMontage</h1>
+            <p class="status-quote">"Насмешил придурка в зеркале."</p>
+            
+            <div class="info-badges">
+                <span class="badge location"><i class="fas fa-map-marker-alt"></i> Витебская обл, Беларусь</span>
+                <span id="stream-status" class="badge stream-check">
+                    <i class="fas fa-circle"></i> <span class="status-text">Связь с базой...</span>
+                </span>
+            </div>
+        </header>
+
+        <!-- TWITCH EMBED (Hidden by default) -->
+        <div id="live-box" class="twitch-wrapper" style="display: none;">
+            <div class="live-indicator">
+                <i class="fas fa-satellite-dish"></i> В ЭФИРЕ
+            </div>
+            <div class="live-layout">
+                <div id="twitch-embed"></div>
+                
+                <div class="live-donors-sidebar">
+                    <div class="ld-header">
+                        <i class="fas fa-gem"></i> Топ спонсоров стрима
+                    </div>
+                    <div id="live-donors-list" class="ld-list">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SOCIAL LINKS -->
+        <section class="content-card tilt-effect">
+            <h2 class="section-title">Медиа & Связь</h2>
+            <nav class="social-links">
+                <a href="https://twitch.tv/daymonmontage" target="_blank" class="s-btn twitch">
+                    <i class="fab fa-twitch"></i> <span>Twitch</span>
+                </a>
+                <a href="https://t.me/+0uVZZdwvZ0UwMDEy" target="_blank" class="s-btn telegram">
+                    <i class="fab fa-telegram"></i> <span>Telegram</span>
+                </a>
+                <a href="https://www.youtube.com/@daymon_montage/videos" target="_blank" class="s-btn youtube">
+                    <i class="fab fa-youtube"></i> <span>YouTube</span>
+                </a>
+                <a href="https://www.tiktok.com/@daymon.montage" target="_blank" class="s-btn tiktok">
+                    <i class="fab fa-tiktok"></i> <span>TikTok</span>
+                </a>
+                <a href="https://vk.com/daymon_montage" target="_blank" class="s-btn vk">
+                    <i class="fab fa-vk"></i> <span>ВКонтакте</span>
+                </a>
+                <a href="https://discord.gg/UtGPrFT2Es" target="_blank" class="s-btn discord">
+                    <i class="fab fa-discord"></i> <span>Discord</span>
+                </a>
+                <a href="https://www.instagram.com/_p_a_s_k_u_d_a_/?hl=ru" target="_blank" class="s-btn insta">
+                    <i class="fab fa-instagram"></i> <span>Instagram</span>
+                </a>
+                <a href="https://steamcommunity.com/id/DaymonMontage/" target="_blank" class="s-btn steam">
+                    <i class="fab fa-steam"></i> <span>Steam</span>
+                </a>
+                <a href="https://soundcloud.com/user-763490654-509292968" target="_blank" class="s-btn soundcloud">
+                    <i class="fab fa-soundcloud"></i> <span>SoundCloud</span>
+                </a>
+            </nav>
+        </section>
+
+        <!-- SUPPORT & CARDS -->
+        <section class="content-card tilt-effect">
+            <h2 class="section-title">Поддержка канала</h2>
+            
+            <div class="warning-box health-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p><strong>ВНИМАНИЕ:</strong> Просьба не отправлять громкие звуки, у стримера есть слуховая травма.</p>
+            </div>
+
+            <div class="alert-buttons">
+                <a href="https://www.donationalerts.com/r/daymonmontage" target="_blank" class="donate-btn da">
+                    <div class="btn-icon"><i class="fas fa-donate"></i></div>
+                    <div class="btn-text">
+                        <strong>DonationAlerts</strong>
+                        <small>Основной способ</small>
+                    </div>
+                </a>
+                <a href="https://memealerts.com/daymonmontage" target="_blank" class="donate-btn ma">
+                    <div class="btn-icon"><i class="fas fa-images"></i></div>
+                    <div class="btn-text">
+                        <strong>MemeAlerts</strong>
+                        <small>Мем / Звук</small>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="direct-support">
+                <!-- Обертка для трех колонок: Карта - Список - Карта -->
+                <div class="support-layout">
+                    
+                    <!-- 1. LEFT CARD: Belarusbank -->
+                    <div class="inscryption-card card-bb" onclick="copyToClipboard('9112380021489218')">
+                        <div class="card-cost">
+                            <i class="fas fa-bone bone-cost"></i>
+                            <i class="fas fa-bone bone-cost"></i>
+                        </div>
+                        <div class="card-name-box">БЕЛАРУСБАНК</div>
+                        <div class="card-portrait-box">
+                            <img src="assets/belarusbank.png" alt="BB" class="bank-logo">
+                        </div>
+                        <div class="card-holder">ILYA KHAMIANKOU</div>
+                        <div class="card-sigils">9112 3800<br>2148 9218</div>
+                        <div class="copy-hint">*Нажми, чтобы скопировать</div>
+                        <div class="card-stats">
+                            <div class="stat-box stat-atk" title="Месяц"><div class="stat-bg"></div><span class="stat-val">10</span></div>
+                            <div class="stat-box stat-hp" title="Год"><div class="stat-bg"></div><span class="stat-val">27</span></div>
+                        </div>
+                    </div>
+
+                    <!-- 2. CENTER: TOP DONORS LIST -->
+                    <div class="donors-center-panel">
+                        <div class="donors-tabs">
+                            <button class="d-tab active" data-tab="all_time" title="За всё время"><i class="fas fa-infinity"></i></button>
+                            <button class="d-tab" data-tab="year" title="За год">1Г</button>
+                            <button class="d-tab" data-tab="month" title="За месяц">1М</button>
+                            <button id="stream-tab-btn" class="d-tab stream-tab" data-tab="stream" title="Текущий стрим" style="display: none;">
+                                <i class="fas fa-signal"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="donors-header">
+                            <span id="donors-title">ЛЕГЕНДЫ</span>
+                        </div>
+
+                        <div id="donors-list-container" class="donors-scroll-area">
+                            <div class="loader-wrap">
+                                <p class="loader-text" style="font-size:0.7rem">ЗАГРУЗКА...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. RIGHT CARD: Priorbank -->
+                    <div class="inscryption-card card-prior" onclick="copyToClipboard('5489529620373271')">
+                        <div class="card-cost">
+                            <div class="blood-drop"></div>
+                            <div class="blood-drop"></div>
+                        </div>
+                        <div class="card-name-box">Priorbank</div>
+                        <div class="card-portrait-box">
+                            <img src="assets/priorbank.png" alt="Prior" class="bank-logo">
+                        </div>
+                        <div class="card-holder">ILYA KHAMIANKOU</div>
+                        <div class="card-sigils">5489 5296<br>2037 3271</div>
+                        <div class="copy-hint">*Нажми, чтобы скопировать</div>
+                        <div class="card-stats">
+                            <div class="stat-box stat-atk" title="Месяц"><div class="stat-bg"></div><span class="stat-val">05</span></div>
+                            <div class="stat-box stat-hp" title="Год"><div class="stat-bg"></div><span class="stat-val">28</span></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- INFO & SPECS -->
+        <div class="two-columns">
+            <section class="content-card tilt-effect">
+                <h2 class="section-title">Досье</h2>
+                <ul class="specs-list">
+                    <li>
+                        <span class="spec-label">Имя</span> <span class="spec-val">Илья Хоменков</span>
+                    </li>
+                    <li>
+                        <span class="spec-label">Возраст</span> <span class="spec-val">24 года (29.04.2001)</span>
+                    </li>
+                    <li>
+                        <span class="spec-label">Начало</span> <span class="spec-val">20 июня 2016</span>
+                    </li>
+                    <li>
+                        <span class="spec-label">Служба</span> <span class="spec-val">11-я ОМБр, Разведка</span>
+                    </li>
+                    <li>
+                        <span class="spec-label">Характер</span> <span class="spec-val highlight">я ебал</span>
+                    </li>
+                    <li>
+                        <span class="spec-label">Образ жизни</span> <span class="spec-val highlight">тоже</span>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="content-card tilt-effect">
+                <h2 class="section-title">Setup (Железо)</h2>
+                <ul class="specs-list">
+                    <li>
+                        <span class="spec-label">CPU</span> <span class="spec-val">Ryzen 5 7500F</span>
+                    </li>
+                    <li>
+                        <span class="spec-label">GPU</span> <span class="spec-val">RTX 4060Ti 8GB</span>
+                    </li>
+                    <li>
+                        <span class="spec-label">RAM</span> <span class="spec-val">32GB DDR5 Fury</span>
+                    </li>
+                    <li>
+                        <span class="spec-label">MOBO</span> <span class="spec-val">Gigabyte B650</span>
+                    </li>
+                    <li>
+                        <span class="spec-label">PSU</span> <span class="spec-val">Deepcool 750w</span>
+                    </li>
+                    <li>
+                        <span class="spec-label">ЖД</span> <span class="spec-val">TOSIBA 1 TB + SSD 170 GB</span>
+                    </li>
+                </ul>
+            </section>
+        </div>
+
+        <!-- GAMES LIBRARY -->
+        <section class="content-card">
+            <h2 class="section-title">Библиотека Игр</h2>
+            <p style="margin-bottom:15px; font-size:0.9rem; color:#a1a1aa;">Игры, в которых Деймон оставил свой след.</p>
+            
+            <!-- Сюда JS загрузит карточки игр -->
+            <div id="games-container" class="games-grid">
+                <div class="loader-wrap">
+                    <p class="loader-text">СКАНИРОВАНИЕ АРХИВА...</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+<!-- FOOTER -->
+    <footer class="site-footer">
+        <a href="https://t.me/daymonstream" target="_blank" class="special-footer-btn">
+            <i class="fab fa-telegram-plane"></i>
+            <span>ПОДСТОЛЬНЫЕ СЛУХИ</span>
+        </a>
+        
+        <div class="credits">
+            <span>Made with <i class="fas fa-heart heart-beat"></i> by</span>
+            <a href="https://t.me/torgasik" target="_blank" class="dev-link">
+                <span class="dev-nick">Torgovets</span>
+                <img src="assets/dev-icon.png" alt="Dev" class="dev-pic">
+            </a>
+        </div>
+
+        <!-- VERSION BADGE -->
+        <div class="version-badge" title="System Build Version">
+            <span class="v-dot"></span>
+            <span class="v-text">SYS.VER :: 1.5.0</span>
+        </div>
+    </footer>
+
+    <!-- MODALS & OVERLAYS -->
+    <!-- CONSOLE TRIGGER (MOVED HERE) -->
+    <div class="system-trigger" onclick="toggleConsole()">
+        <span class="sys-dot"></span>
+        <span class="sys-text">CONSOLE V.1.0.5</span>
+    </div>
+    
+    <div id="votv-console" class="console-wrapper">
+        <div class="console-header">
+            <span>> TERMINAL_ACCESS</span>
+            <button class="close-console" onclick="toggleConsole()">[X]</button>
+        </div>
+        
+        <div id="console-output" class="console-body">
+        </div>
+
+        <div class="console-input-area">
+            <span class="prompt-user">user@daymon:~$</span>
+            <input type="text" id="cmd-input" autocomplete="off" spellcheck="false" placeholder="Type 'help'...">
+        </div>
+    </div>
+
+    <div id="toast-notification" class="toast">Скопировано в буфер!</div>
+
+    <!-- LOGO ACHIEVEMENTS (Bottom Right) -->
+    <div id="ach-history-trigger" title="Журнал достижений">
+        <i class="fas fa-trophy"></i>
+        <div class="ach-notification-dot"></div>
+    </div>
+
+    <!-- HISTORY PANEL -->
+    <div id="ach-history-panel" class="ach-history-panel">
+        <div class="ach-panel-header">
+            <div class="ach-panel-title">
+                <i class="fas fa-clipboard-list"></i> История
+            </div>
+            <div class="ach-panel-stats" id="ach-stats-display">0/0</div>
+        </div>
+        <div class="ach-history-list" id="ach-history-list">
+            <!-- JS заполнит это -->
+        </div>
+    </div>
+
+    <!-- GAME GALLERY MODAL -->
+    <div id="game-gallery-modal" class="game-modal-overlay">
+        <div class="game-modal-content">
+            <div class="gm-header">
+                <span id="gm-game-title" class="gm-title">GAME NAME</span>
+                <button id="gm-close-btn" class="gm-close">&times;</button>
+            </div>
+            <div id="gm-clips-grid" class="gm-body">
+                <!-- Clips will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN SCRIPT (MODULE) -->
+    <script type="module" src="js/main.js"></script>
+
+    <!-- ARCADE HUB BUTTON (Bottom Left) -->
+    <a href="https://daymonmontage.github.io/daymon-games/" class="arcade-hub-btn" title="Daymon Arcade">
+        <div class="ah-icon-box">
+            <i class="fas fa-gamepad"></i>
+        </div>
+        <div class="ah-content">
+            <span class="ah-title">ARCADE</span>
+            <span class="ah-subtitle">Play & Chill</span>
+        </div>
+        <div class="ah-glitch-effect"></div>
+    </a>
+</body>
+</html>
