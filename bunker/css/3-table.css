@@ -1,0 +1,313 @@
+/* ================================== */
+/* КРУГЛЫЙ СТОЛ (GAME SCREEN)         */
+/* ================================== */
+
+.bunker-table-container {
+    position: relative;
+    width: 320px;
+    height: 320px;
+    margin: 20px auto; /* Было 40px auto - уменьшили отступ */
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, rgba(0, 0, 0, 0.4) 70%);
+    border: 2px dashed rgba(16, 185, 129, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+}
+
+.table-center-prop {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #0f0f11;
+    border: 2px solid #10b981;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #10b981;
+    z-index: 10;
+    transition: all 0.3s ease;
+}
+
+/* Эффекты для голосования */
+.table-center-prop.voting {
+    width: 150px;
+    height: 150px;
+    flex-direction: column;
+    border-color: #ef4444;
+    color: #ef4444;
+    animation: hologramPulseRed 2s infinite ease-in-out;
+}
+.table-center-prop.voting i {
+    color: #ef4444 !important;
+}
+
+.hologram-text {
+    font-family: var(--font-pixel); 
+    font-size: 0.35rem; 
+    color: #ef4444; 
+    animation: pulse 1s infinite;
+    text-align: center;
+}
+
+@keyframes hologramPulseRed {
+    0% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); transform: translate(-50%, -50%) scale(1); }
+    50% { box-shadow: 0 0 35px rgba(239, 68, 68, 0.7); transform: translate(-50%, -50%) scale(1.05); }
+    100% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); transform: translate(-50%, -50%) scale(1); }
+}
+
+.player-seat {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    z-index: 20;
+    transition: all 0.5s ease;
+}
+
+/* Эффекты цели для интерактивного голосования */
+.player-seat.votable {
+    cursor: crosshair;
+}
+
+.player-seat.votable .player-avatar {
+    animation: votablePulse 2s infinite;
+}
+
+.player-seat.votable:hover .player-avatar {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.9);
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+}
+
+@keyframes votablePulse {
+    0% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.2); }
+    50% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); }
+    100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.2); }
+}
+
+.seat-avatar-wrap {
+    position: relative;
+    margin-bottom: 5px;
+}
+
+.player-seat .player-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid #333;
+    object-fit: cover;
+    background: #000;
+}
+
+.player-seat.dead {
+    opacity: 0.3;
+    pointer-events: none; /* Мертвых нельзя выбирать */
+}
+.player-seat.dead .player-avatar {
+    filter: grayscale(100%) blur(2px) contrast(150%);
+    border-color: #ef4444;
+}
+
+.seat-badges {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    display: flex;
+    gap: 2px;
+    background: rgba(0,0,0,0.8);
+    border-radius: 10px;
+    padding: 2px 4px;
+}
+
+.player-seat .player-name {
+    font-size: 0.55rem;
+    color: #fff;
+    font-family: var(--font-pixel);
+    word-break: break-all;
+    line-height: 1.2;
+}
+
+/* ================================== */
+/* ЛЕЙАУТ ИГРЫ (ДВЕ КОЛОНКИ ДЛЯ ПК)   */
+/* ================================== */
+.game-layout {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    gap: 50px;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    perspective: 1000px; 
+}
+
+.game-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: flex-start; /* Меняем center на flex-start, чтобы контент не обрезался сверху */
+    overflow-y: auto; /* Разрешаем скролл, если контент не влезает */
+    min-height: 0; /* Важный фикс для бага Flexbox в Safari/Firefox */
+    padding-top: 60px; /* <--- Добавили, чтобы карточки верхних игроков при зуме не резались */
+    padding-bottom: 20px;
+}
+
+/* Скрываем ползунок скролла для красоты, но оставляем функционал */
+.game-col::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+.table-col {
+    align-items: center;
+}
+
+.game-actions {
+    width: 100%;
+    max-width: 350px;
+    margin-top: auto; /* Автоматически прижимаем кнопки к низу */
+    margin-bottom: 20px;
+    flex-shrink: 0; /* Запрещаем браузеру сжимать сами кнопки */
+    z-index: 50; /* Поднимаем слой на всякий случай */
+}
+
+@media (min-width: 1024px) {
+    .bunker-table-container {
+        width: 550px !important;
+        height: 550px !important;
+        max-width: 100% !important;
+    }
+    .player-seat {
+        width: 160px !important;
+    }
+}
+
+/* ================================== */
+/* МИНИ-КАРТОЧКИ НА СТОЛЕ             */
+/* ================================== */
+
+.seat-revealed-cards-radial {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    z-index: 50; /* Поверх аватарок */
+}
+
+.mini-board-card {
+    background: rgba(26, 26, 29, 0.95);
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 4px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    cursor: pointer;
+    position: relative;
+    z-index: 10;
+}
+
+.radial-card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 75px !important; /* Фиксированный размер */
+    /* Используем переменные: --card-angle, --card-radius */
+    transform: translate(-50%, -50%) rotate(var(--card-angle)) translateY(var(--card-radius)) rotate(calc(-1 * var(--card-angle)));
+}
+
+.mini-board-card:hover {
+    z-index: 100 !important;
+}
+
+.radial-card:hover {
+    transform: translate(-50%, -50%) rotate(var(--card-angle)) translateY(calc(var(--card-radius) + 10px)) rotate(calc(-1 * var(--card-angle))) scale(1.6);
+}
+
+.mbc-key {
+    font-family: var(--font-pixel);
+    font-size: 0.35rem;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.mbc-val {
+    font-family: var(--font-main);
+    font-size: 0.55rem;
+    color: #fff;
+    line-height: 1.2;
+    word-wrap: break-word;
+}
+
+/* Цветовая кодировка (синхронизирована с основной колодой) */
+.mini-board-card.type-biology { border-color: #10b981; }
+.mini-board-card.type-biology .mbc-key { color: #10b981; }
+
+.mini-board-card.type-health { border-color: #fbbf24; }
+.mini-board-card.type-health .mbc-key { color: #fbbf24; }
+
+.mini-board-card.type-profession { border-color: #3b82f6; }
+.mini-board-card.type-profession .mbc-key { color: #3b82f6; }
+
+.mini-board-card.type-trait { border-color: #a855f7; }
+.mini-board-card.type-trait .mbc-key { color: #a855f7; }
+
+.mini-board-card.type-equipment { border-color: #ef4444; }
+.mini-board-card.type-equipment .mbc-key { color: #ef4444; }
+
+/* ================================== */
+/* ОБЕРТКА ДЛЯ СТОЛА И КНОПОК СБОКУ   */
+/* ================================== */
+
+.table-area-wrapper {
+    display: flex;
+    flex-direction: row; /* Выстраиваем стол и кнопки в один горизонтальный ряд */
+    align-items: center; /* Центруем их по вертикали */
+    justify-content: center;
+    gap: 40px; /* Расстояние между столом и панелью кнопок */
+    width: 100%;
+}
+
+/* Убиваем старые отступы стола, так как теперь центруем его через флекс-обертку */
+.bunker-table-container {
+    margin: 0 !important; 
+}
+
+/* Настраиваем блок кнопок для положения справа */
+.table-area-wrapper .game-actions {
+    width: 250px;
+    margin: 0; /* Сбрасываем старые марджины */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 15px; /* Зазор между кнопками "Голосовать" и "Покинуть" */
+    flex-shrink: 0; /* Запрещаем кнопкам сжиматься, если места мало */
+}
+
+/* Адаптив: если экран меньше 1200px (например, небольшие ноутбуки или планшеты) */
+/* Возвращаем кнопки обратно под стол, чтобы они не наезжали друг на друга */
+@media (max-width: 1200px) {
+    .table-area-wrapper {
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .table-area-wrapper .game-actions {
+        width: 100%;
+        max-width: 350px;
+    }
+}

@@ -1,0 +1,169 @@
+/* Модальное окно голосования */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(5, 5, 5, 0.95); z-index: 999;
+    display: none; justify-content: center; align-items: center;
+    backdrop-filter: blur(5px);
+}
+.modal-overlay.active { display: flex; }
+
+.modal-content {
+    background: #0f0f11; border: 2px solid #ef4444; padding: 30px;
+    border-radius: 12px; width: 90%; max-width: 400px; text-align: center;
+    box-shadow: 0 0 50px rgba(239, 68, 68, 0.2);
+}
+
+.vote-options {
+    display: flex; flex-direction: column; gap: 10px;
+}
+
+.vote-btn {
+    background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fff; padding: 12px; border-radius: 6px; cursor: pointer;
+    font-family: var(--font-main); font-weight: bold; transition: 0.2s;
+}
+.vote-btn:hover:not(:disabled) { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; }
+.vote-btn.selected { background: #ef4444; color: #000; border-color: #ef4444; }
+.vote-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Стили для изгнанных (мертвых) игроков */
+.player-item.dead {
+    opacity: 0.4;
+    filter: grayscale(100%);
+    border-left-color: #555;
+}
+.player-item.dead .player-name { text-decoration: line-through; color: #888 !important; }
+.dead-icon { color: #ef4444; margin-left: 10px; font-size: 1.2rem; }
+
+/* ================================== */
+/* СТИЛИ ФОРМЫ НАСТРОЕК               */
+/* ================================== */
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.setting-group label {
+    display: block;
+    color: #a1a1aa;
+    font-family: var(--font-pixel);
+    font-size: 0.65rem;
+    margin-bottom: 10px;
+}
+
+.setting-group select {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+    color: #10b981;
+    padding: 12px;
+    font-family: var(--font-main);
+    font-weight: bold;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+}
+
+.setting-group select:focus {
+    border-color: #10b981;
+}
+
+/* Стилизуем выпадающие пункты меню */
+.setting-group select option {
+    background-color: #0f0f11; /* Темный фон бункера */
+    color: #10b981;            /* Зеленый текст */
+    font-weight: bold;
+    padding: 10px;
+}
+
+/* Изменяем цвет самого селекта при наведении/открытии */
+.setting-group select:hover {
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+/* Стилизация ползунка */
+.setting-group input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    outline: none;
+    margin-bottom: 5px;
+}
+
+.setting-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #10b981;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+/* Кастомный чекбокс */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-family: var(--font-main) !important;
+    font-size: 0.85rem !important;
+    color: #fff !important;
+    margin-bottom: 0 !important;
+}
+
+.checkbox-label input {
+    display: none;
+}
+
+.custom-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #555;
+    border-radius: 4px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    transition: 0.2s;
+}
+
+.checkbox-label input:checked + .custom-checkbox {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+.checkbox-label input:checked + .custom-checkbox::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: #000;
+    font-size: 0.7rem;
+}
+
+/* ================================== */
+/* СТИЛИ ПАНЕЛИ ОДОБРЕНИЯ ЗАЯВОК      */
+/* ================================== */
+.approval-item {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255, 255, 255, 0.05); padding: 10px; 
+    border-radius: 8px; border-left: 3px solid #3b82f6;
+}
+.approval-info { display: flex; align-items: center; gap: 10px; }
+.approval-info img { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #555; }
+.approval-info span { color: #fff; font-size: 0.8rem; font-weight: bold; }
+.approval-actions { display: flex; gap: 5px; }
+
+.appr-btn { 
+    width: 35px; height: 35px; border: none; border-radius: 4px; 
+    cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;
+}
+.appr-yes { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; }
+.appr-yes:hover { background: #10b981; color: #000; box-shadow: 0 0 10px #10b981; }
+.appr-no { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
+.appr-no:hover { background: #ef4444; color: #000; box-shadow: 0 0 10px #ef4444; }

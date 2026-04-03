@@ -1,1 +1,187 @@
-#arcade-loader{position:fixed;top:0;left:0;width:100%;height:100%;background:#050505;z-index:99999;display:flex;justify-content:center;align-items:center;font-family:'Courier New',monospace;overflow:hidden;transition:opacity .5s ease,visibility .5s}#arcade-loader.fade-out{opacity:0;visibility:hidden;pointer-events:none}.loader-scanlines{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,0.25) 50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06));background-size:100% 3px,3px 100%;pointer-events:none;z-index:2}.loader-content{width:90%;max-width:600px;position:relative;z-index:3;color:#22c55e;text-shadow:0 0 5px rgba(34,197,94,0.5)}.sys-header{display:flex;justify-content:space-between;border-bottom:2px solid #22c55e;padding-bottom:5px;margin-bottom:30px;font-weight:bold;font-size:.8rem;letter-spacing:1px}.logo-glitch-wrapper{text-align:center;margin-bottom:30px}.loader-title{font-family:'Press Start 2P',cursive;font-size:2rem;color:#fff;position:relative;display:inline-block;text-shadow:2px 2px 0 #f97316}.loader-title::before,.loader-title::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;height:100%;background:#050505}.loader-title::before{left:2px;text-shadow:-1px 0 #ff00c1;clip:rect(44px,450px,56px,0);animation:glitch-anim 5s infinite linear alternate-reverse}.loader-title::after{left:-2px;text-shadow:-1px 0 #00fff9;clip:rect(44px,450px,56px,0);animation:glitch-anim-2 5s infinite linear alternate-reverse}.boot-log-container{height:120px;overflow:hidden;margin-bottom:20px;border-left:2px solid rgba(34,197,94,0.3);padding-left:10px;font-size:.75rem;display:flex;flex-direction:column;justify-content:flex-end}.log-line{display:block;margin-bottom:2px;opacity:.8}.log-line.warn{color:#f97316}.log-line.err{color:#ef4444}.progress-wrapper{border:1px solid rgba(34,197,94,0.3);padding:15px;background:rgba(0,20,0,0.5);width:100%;box-sizing:border-box}.progress-label{font-size:.7rem;margin-bottom:8px;text-transform:uppercase;letter-spacing:2px;color:#22c55e}.retro-bar-track{width:100%;height:24px;border:2px solid #22c55e;padding:2px;background:#000;box-sizing:border-box;margin-bottom:5px;box-shadow:0 0 10px rgba(34,197,94,0.1)}.retro-bar-fill{height:100%;width:0;background-color:#f97316;background-image:linear-gradient(90deg,#050505 2px,transparent 2px);background-size:15px 100%;box-shadow:0 0 15px rgba(249,115,22,0.5);transition:width .1s linear}.percentage{text-align:right;font-size:.8rem;font-weight:bold;color:#f97316;font-family:'Courier New',monospace}.cursor-blink{animation:blink .5s infinite}@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}@keyframes glitch-anim{0%{clip:rect(10px,9999px,30px,0);transform:skew(0.5deg)}10%{clip:rect(80px,9999px,100px,0);transform:skew(-0.5deg)}20%{clip:rect(40px,9999px,60px,0);transform:skew(0.1deg)}100%{clip:rect(20px,9999px,90px,0);transform:skew(0)}}@keyframes glitch-anim-2{0%{clip:rect(60px,9999px,80px,0);transform:skew(-0.5deg)}10%{clip:rect(20px,9999px,40px,0);transform:skew(0.5deg)}20%{clip:rect(90px,9999px,100px,0);transform:skew(-0.1deg)}100%{clip:rect(10px,9999px,30px,0);transform:skew(0)}}@media(max-width:600px){.loader-title{font-size:1.2rem}.boot-log-container{height:100px;font-size:.6rem}.ascii-bar-box{font-size:.8rem}}
+/* 
+   7. LOADER (BIOS BOOT STYLE)
+*/
+
+#arcade-loader {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #050505;
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Courier New', monospace; /* Терминальный шрифт */
+    overflow: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s;
+}
+
+#arcade-loader.fade-out {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* CRT Эффект */
+.loader-scanlines {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 3px, 3px 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.loader-content {
+    width: 90%;
+    max-width: 600px;
+    position: relative;
+    z-index: 3;
+    color: #22c55e; /* Зеленый терминал */
+    text-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
+}
+
+/* Верхняя строка */
+.sys-header {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 2px solid #22c55e;
+    padding-bottom: 5px;
+    margin-bottom: 30px;
+    font-weight: bold;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+/* Глитч Логотип */
+.logo-glitch-wrapper {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.loader-title {
+    font-family: 'Press Start 2P', cursive; /* Пиксельный шрифт */
+    font-size: 2rem;
+    color: #fff;
+    position: relative;
+    display: inline-block;
+    text-shadow: 2px 2px 0px #f97316; /* Оранжевая тень */
+}
+
+/* Анимация Глитча */
+.loader-title::before, .loader-title::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #050505;
+}
+
+.loader-title::before {
+    left: 2px;
+    text-shadow: -1px 0 #ff00c1;
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+
+.loader-title::after {
+    left: -2px;
+    text-shadow: -1px 0 #00fff9;
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim-2 5s infinite linear alternate-reverse;
+}
+
+/* Логи загрузки */
+.boot-log-container {
+    height: 120px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    border-left: 2px solid rgba(34, 197, 94, 0.3);
+    padding-left: 10px;
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Текст прижат к низу */
+}
+
+.log-line {
+    display: block;
+    margin-bottom: 2px;
+    opacity: 0.8;
+}
+.log-line.warn { color: #f97316; }
+.log-line.err { color: #ef4444; }
+
+/* Прогресс бар */
+.progress-wrapper {
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    padding: 15px;
+    background: rgba(0, 20, 0, 0.5);
+    width: 100%; /* На всю ширину контейнера */
+    box-sizing: border-box;
+}
+
+.progress-label {
+    font-size: 0.7rem;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #22c55e;
+}
+
+.retro-bar-track {
+    width: 100%;
+    height: 24px;
+    border: 2px solid #22c55e;
+    padding: 2px;
+    background: #000;
+    box-sizing: border-box;
+    margin-bottom: 5px;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.1);
+}
+
+.retro-bar-fill {
+    height: 100%;
+    width: 0%; /* JS будет менять это */
+    background-color: #f97316;
+    
+    /* Эффект блоков через градиент */
+    background-image: linear-gradient(90deg, #050505 2px, transparent 2px);
+    background-size: 15px 100%; /* Ширина одного "блока" */
+    
+    box-shadow: 0 0 15px rgba(249, 115, 22, 0.5);
+    transition: width 0.1s linear;
+}
+
+.percentage {
+    text-align: right;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #f97316;
+    font-family: 'Courier New', monospace;
+}
+.cursor-blink {
+    animation: blink 0.5s infinite;
+}
+
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+@keyframes glitch-anim {
+    0% { clip: rect(10px, 9999px, 30px, 0); transform: skew(0.5deg); }
+    10% { clip: rect(80px, 9999px, 100px, 0); transform: skew(-0.5deg); }
+    20% { clip: rect(40px, 9999px, 60px, 0); transform: skew(0.1deg); }
+    100% { clip: rect(20px, 9999px, 90px, 0); transform: skew(0); }
+}
+@keyframes glitch-anim-2 {
+    0% { clip: rect(60px, 9999px, 80px, 0); transform: skew(-0.5deg); }
+    10% { clip: rect(20px, 9999px, 40px, 0); transform: skew(0.5deg); }
+    20% { clip: rect(90px, 9999px, 100px, 0); transform: skew(-0.1deg); }
+    100% { clip: rect(10px, 9999px, 30px, 0); transform: skew(0); }
+}
+
+/* Адаптив */
+@media (max-width: 600px) {
+    .loader-title { font-size: 1.2rem; }
+    .boot-log-container { height: 100px; font-size: 0.6rem; }
+    .ascii-bar-box { font-size: 0.8rem; }
+}

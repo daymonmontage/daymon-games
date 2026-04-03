@@ -1,1 +1,77 @@
-<!DOCTYPE html><html lang=ru><head><meta charset=UTF-8><meta name=viewport content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Lore Quiz | Daymon Arcade</title><link href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css rel=stylesheet><link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Montserrat:wght@400;700;900&display=swap" rel=stylesheet><link rel=stylesheet href=style.css></head><body><div class=crt-lines></div><div class=vignette></div><div class=quiz-wrapper><header class=quiz-header><a href=../index.html class=back-btn><i class="fas fa-arrow-left"></i> ВЫХОД</a><div class=quiz-title>LORE_DATABASE_V1.0</div><div class=progress-text>ВОПРОС <span id=q-current>1</span>/<span id=q-total>19</span></div></header><div id=start-screen class="screen active"><div class=logo-area><i class="fas fa-brain big-icon"></i></div><h1>ПРОВЕРКА ЗНАНИЙ</h1><p class=desc>Насколько хорошо ты знаешь стримера?</p><div class=difficulty-info><span><i class="fas fa-exclamation-triangle"></i> СЛОЖНОСТЬ: ХАРДКОР</span></div><button id=start-btn class=neon-btn>НАЧАТЬ ТЕСТ</button></div><div id=game-screen class=screen><div class=question-card><div class=difficulty-badge id=q-difficulty>EASY</div><h2 id=question-text>Загрузка вопроса...</h2></div><div class=options-grid id=options-container></div></div><div id=result-screen class=screen><h2>СИНХРОНИЗАЦИЯ ЗАВЕРШЕНА</h2><div class=score-circle-container><div class=score-circle id=score-circle><div class=inner-circle><span id=score-percent>0%</span></div></div></div><div class=rank-container><div class=rank-label>ТВОЙ СТАТУС:</div><div id=rank-title class=rank-title>НЬЮФАГ</div></div><div class=stats-row><div>ПРАВИЛЬНО: <span id=correct-count style=color:#22c55e>0</span></div><div>ОШИБКИ: <span id=wrong-count style=color:#ef4444>0</span></div></div><button id=restart-btn class=neon-btn>ПОВТОРИТЬ</button><a href=../index.html class=text-link>ВЕРНУТЬСЯ В ХАБ</a></div></div><script type=module src=script.js></script></body></html>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lore Quiz | Daymon Arcade</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="crt-lines"></div>
+    <div class="vignette"></div>
+
+    <div class="quiz-wrapper">
+        <!-- HEADER -->
+        <header class="quiz-header">
+            <a href="../index.html" class="back-btn"><i class="fas fa-arrow-left"></i> ВЫХОД</a>
+            <div class="quiz-title">LORE_DATABASE_V1.0</div>
+            <div class="progress-text">ВОПРОС <span id="q-current">1</span>/<span id="q-total">19</span></div>
+        </header>
+
+        <!-- START SCREEN -->
+        <div id="start-screen" class="screen active">
+            <div class="logo-area">
+                <i class="fas fa-brain big-icon"></i>
+            </div>
+            <h1>ПРОВЕРКА ЗНАНИЙ</h1>
+            <p class="desc">Насколько хорошо ты знаешь стримера?</p>
+            <div class="difficulty-info">
+                <span><i class="fas fa-exclamation-triangle"></i> СЛОЖНОСТЬ: ХАРДКОР</span>
+            </div>
+            <button id="start-btn" class="neon-btn">НАЧАТЬ ТЕСТ</button>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="game-screen" class="screen">
+            <div class="question-card">
+                <div class="difficulty-badge" id="q-difficulty">EASY</div>
+                <h2 id="question-text">Загрузка вопроса...</h2>
+            </div>
+            
+            <div class="options-grid" id="options-container">
+                <!-- Кнопки генерируются JS -->
+            </div>
+        </div>
+
+        <!-- RESULT SCREEN -->
+        <div id="result-screen" class="screen">
+            <h2>СИНХРОНИЗАЦИЯ ЗАВЕРШЕНА</h2>
+            
+            <div class="score-circle-container">
+                <div class="score-circle" id="score-circle">
+                    <div class="inner-circle">
+                        <span id="score-percent">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rank-container">
+                <div class="rank-label">ТВОЙ СТАТУС:</div>
+                <div id="rank-title" class="rank-title">НЬЮФАГ</div>
+            </div>
+
+            <div class="stats-row">
+                <div>ПРАВИЛЬНО: <span id="correct-count" style="color:#22c55e">0</span></div>
+                <div>ОШИБКИ: <span id="wrong-count" style="color:#ef4444">0</span></div>
+            </div>
+
+            <button id="restart-btn" class="neon-btn">ПОВТОРИТЬ</button>
+            <a href="../index.html" class="text-link">ВЕРНУТЬСЯ В ХАБ</a>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>

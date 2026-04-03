@@ -1,1 +1,215 @@
-.player-status{display:flex;align-items:center;gap:15px}.credits-box{font-family:var(--font-pixel);font-size:.65rem;color:#ffd700;text-shadow:2px 2px 0 #000;white-space:nowrap;animation:blink-text 2s infinite}.auth-ui{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.05);padding:5px 5px 5px 12px;border-radius:50px;border:1px solid rgba(255,255,255,0.1);transition:all .3s ease}.auth-info{display:flex;align-items:center;gap:10px}.player-name{font-family:var(--font-pixel);font-size:.55rem;color:#fff;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.player-avatar{width:28px;height:28px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#555;border:2px solid #555;overflow:hidden;flex-shrink:0}.player-avatar img{width:100%;height:100%;object-fit:cover}.auth-ui.logged-in{border-color:var(--neon-blue);box-shadow:0 0 10px rgba(139,92,246,0.3);background:rgba(139,92,246,0.1);padding-right:5px}.auth-ui.logged-in .player-avatar{border-color:#22c55e}.logout-icon-btn{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.5);color:#ef4444;width:28px;height:28px;border-radius:50%;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:.8rem;transition:.2s;margin-left:5px}.auth-ui.logged-in .logout-icon-btn{display:flex}.logout-icon-btn:hover{background:#ef4444;color:white;transform:scale(1.1)}.auth-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(5,5,7,0.85);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);z-index:9999;display:flex;justify-content:center;align-items:center;opacity:0;pointer-events:none;transition:opacity .5s ease}.auth-overlay.active{opacity:1;pointer-events:auto}.lock-container{background:#0f0f11;border:1px solid #ef4444;padding:40px;border-radius:16px;text-align:center;max-width:400px;box-shadow:0 0 50px rgba(239,68,68,0.2),inset 0 0 20px rgba(239,68,68,0.1);position:relative;overflow:hidden}.lock-container::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;background:repeating-linear-gradient(45deg,#ef4444,#ef4444 10px,#000 10px,#000 20px)}.lock-icon{font-size:3rem;color:#ef4444;margin-bottom:20px;animation:pulse-lock 2s infinite}.lock-title{font-family:var(--font-pixel);color:#fff;font-size:1.2rem;margin-bottom:15px;letter-spacing:1px}.lock-desc{color:#a1a1aa;font-size:.85rem;line-height:1.5;margin-bottom:30px}.discord-btn-large{background:#5865f2;color:white;border:0;padding:15px 30px;border-radius:8px;font-family:var(--font-main);font-weight:800;font-size:.9rem;cursor:pointer;transition:all .3s;display:inline-flex;align-items:center;gap:10px;text-transform:uppercase;box-shadow:0 5px 15px rgba(88,101,242,0.4)}.discord-btn-large:hover{background:#4752c4;transform:translateY(-3px);box-shadow:0 10px 25px rgba(88,101,242,0.6)}.lock-footer{margin-top:20px;font-family:monospace;font-size:.7rem;color:#555}@media(max-width:480px){.player-name{max-width:80px;font-size:.5rem}.credits-box{font-size:.55rem}.auth-ui{padding:4px 4px 4px 8px}}@keyframes blink-text{0%,100%{opacity:1}50%{opacity:.5}}@keyframes pulse-lock{0%{transform:scale(1);opacity:1}50%{transform:scale(1.1);opacity:.7}100%{transform:scale(1);opacity:1}}
+/* 
+   5. AUTH & PROFILE UI
+*/
+
+.player-status {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.credits-box {
+    font-family: var(--font-pixel);
+    font-size: 0.65rem;
+    color: #ffd700;
+    text-shadow: 2px 2px 0 #000;
+    white-space: nowrap;
+    animation: blink-text 2s infinite;
+}
+
+/* Контейнер профиля */
+.auth-ui {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 5px 5px 5px 12px;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.auth-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.player-name {
+    font-family: var(--font-pixel);
+    font-size: 0.55rem;
+    color: #fff;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.player-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #555;
+    border: 2px solid #555;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.player-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Состояние: Авторизован */
+.auth-ui.logged-in {
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+    background: rgba(139, 92, 246, 0.1);
+    padding-right: 5px; /* Место для кнопки выхода */
+}
+
+.auth-ui.logged-in .player-avatar {
+    border-color: #22c55e;
+}
+
+/* Кнопка выхода */
+.logout-icon-btn {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #ef4444;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none; /* Скрыта для гостя */
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: 0.2s;
+    margin-left: 5px;
+}
+
+.auth-ui.logged-in .logout-icon-btn {
+    display: flex; /* Показываем при входе */
+}
+
+.logout-icon-btn:hover {
+    background: #ef4444;
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Экран блокировки (Overlay) */
+.auth-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(5, 5, 7, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.auth-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.lock-container {
+    background: #0f0f11;
+    border: 1px solid #ef4444;
+    padding: 40px;
+    border-radius: 16px;
+    text-align: center;
+    max-width: 400px;
+    box-shadow: 0 0 50px rgba(239, 68, 68, 0.2), inset 0 0 20px rgba(239, 68, 68, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.lock-container::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 4px;
+    background: repeating-linear-gradient(45deg, #ef4444, #ef4444 10px, #000 10px, #000 20px);
+}
+
+.lock-icon {
+    font-size: 3rem;
+    color: #ef4444;
+    margin-bottom: 20px;
+    animation: pulse-lock 2s infinite;
+}
+
+.lock-title {
+    font-family: var(--font-pixel);
+    color: #fff;
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+}
+
+.lock-desc {
+    color: #a1a1aa;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-bottom: 30px;
+}
+
+.discord-btn-large {
+    background: #5865F2;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-family: var(--font-main);
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex; align-items: center; gap: 10px;
+    text-transform: uppercase;
+    box-shadow: 0 5px 15px rgba(88, 101, 242, 0.4);
+}
+
+.discord-btn-large:hover {
+    background: #4752c4;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(88, 101, 242, 0.6);
+}
+
+.lock-footer {
+    margin-top: 20px;
+    font-family: monospace;
+    font-size: 0.7rem;
+    color: #555;
+}
+
+@media (max-width: 480px) {
+    .player-name { max-width: 80px; font-size: 0.5rem; }
+    .credits-box { font-size: 0.55rem; }
+    .auth-ui { padding: 4px 4px 4px 8px; }
+}
+
+@keyframes blink-text {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes pulse-lock {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+}

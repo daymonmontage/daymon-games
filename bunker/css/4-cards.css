@@ -1,0 +1,204 @@
+/* ================================== */
+/* КРАСИВЫЕ 3D КАРТОЧКИ ХАРАКТЕРИСТИК */
+/* ================================== */
+
+/* Контейнер теперь использует Grid для двух колонок */
+.cards-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Делаем 2 одинаковые колонки */
+    grid-auto-rows: min-content; /* Карточки не растягиваются некрасиво по высоте */
+    gap: 15px;
+    width: 100%;
+    max-width: 600px; /* Чуть расширили, чтобы карточкам не было тесно */
+    
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 15px; /* Буфер для анимации наведения */
+}
+
+/* Прячем скроллбар */
+.cards-container::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+/* Обновленная карточка (текст теперь идет сверху вниз) */
+.bunker-card {
+    position: relative;
+    background: linear-gradient(145deg, #22222a, #13131a);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 12px 10px 12px 20px; /* Уменьшили боковые отступы */
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    will-change: transform, box-shadow;
+    
+    /* Меняем внутреннюю сетку на флекс (элементы друг под другом) */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start; /* Прижимаем текст к левому краю */
+    gap: 8px;
+}
+
+/* Цветная полоса слева (остается без изменений) */
+.bunker-card::before {
+    content: '';
+    position: absolute;
+    top: 0; 
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: var(--card-color, #555);
+    box-shadow: 0 0 10px var(--card-color, #555);
+    transition: 0.3s;
+    /* Добавляем скругление под форму карточки */
+    border-top-left-radius: 11px;
+    border-bottom-left-radius: 11px;
+}
+
+/* Специфичные цвета для разных типов */
+.bunker-card.type-profession { --card-color: #3b82f6; }
+.bunker-card.type-biology   { --card-color: #10b981; }
+.bunker-card.type-health    { --card-color: #fbbf24; }
+.bunker-card.type-trait     { --card-color: #a855f7; }
+.bunker-card.type-equipment { --card-color: #ef4444; }
+
+.bunker-card .card-key i {
+    color: var(--card-color, #fff);
+    text-shadow: 0 0 8px var(--card-color, transparent);
+    font-size: 1.1em;
+}
+
+/* Эффект блика */
+.bunker-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-25deg);
+    transition: left 0.5s ease;
+    pointer-events: none;
+}
+
+.bunker-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--card-color, #555);
+    box-shadow: 0 15px 25px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.02);
+}
+
+.bunker-card:hover::after {
+    left: 150%;
+}
+
+/* Внутренние элементы карточки */
+.card-key {
+    font-family: var(--font-pixel);
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #eee;
+    width: 100%;
+}
+
+.card-value {
+    font-size: 0.8rem;
+    color: #fff;
+    line-height: 1.3;
+    text-align: left;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px #000;
+    flex-grow: 1; /* Позволяет тексту занимать основное место */
+}
+
+.card-action-hint {
+    text-align: left;
+    font-family: var(--font-pixel);
+    font-size: 0.5rem;
+    color: #666;
+    transition: 0.2s;
+    width: 100%;
+    margin-top: auto; /* Прижимает подсказку к низу */
+}
+
+.bunker-card:hover .card-action-hint {
+    color: var(--card-color, #fff);
+    text-shadow: 0 0 5px var(--card-color, transparent);
+}
+
+/* Стиль раскрытой карты */
+.bunker-card.revealed {
+    background: rgba(20, 20, 20, 0.8);
+    border-color: #333;
+    cursor: not-allowed;
+    opacity: 0.6;
+    filter: grayscale(80%);
+}
+
+.bunker-card.revealed::before {
+    background: #333;
+    box-shadow: none;
+}
+
+.bunker-card.revealed::after {
+    content: '\f06e';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: #555;
+    position: absolute;
+    right: 15px; /* Иконка глаза теперь справа */
+    bottom: 15px;
+    background: none;
+    transform: none;
+    font-size: 1.2rem;
+}
+
+/* Адаптив: если играют с телефона, возвращаем в 1 столбик */
+@media (max-width: 600px) {
+    .cards-container {
+        grid-template-columns: 1fr;
+        max-width: 420px;
+    }
+}
+
+
+
+/* ================================== */
+/* АНИМАЦИЯ БРОСКА КАРТЫ НА СТОЛ      */
+/* ================================== */
+
+@keyframes throwCardDynamic {
+    0% {
+        transform: translate(0, 0) rotate(0deg) scale(1);
+        opacity: 1;
+    }
+    100% {
+        /* Эти значения будут переписаны JS динамически для каждого места (custom properties) */
+        transform: translate(var(--tx), var(--ty)) rotate(720deg) scale(0.2); 
+        opacity: 0;
+    }
+}
+
+.animating-card {
+    position: absolute;
+    width: 200px;
+    z-index: 1001;
+    backface-visibility: hidden;
+    pointer-events: none;
+}
+
+.card-trail {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120%; height: 120%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, rgba(0,0,0,0) 70%);
+    border-radius: 50%;
+    filter: blur(10px);
+}

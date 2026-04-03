@@ -139,6 +139,9 @@ function setUiState(isLoggedIn, user = null) {
         nameEl.textContent = userName.toUpperCase();
         if (avatarUrl) avatarEl.innerHTML = `<img src="${avatarUrl}" alt="P1">`;
         creditsEl.textContent = "CREDITS: ∞";
+
+        // ВЫЗЫВАЕМ ПРОВЕРКУ ИГРЫ
+        checkActiveBunkerGame(user.id); 
     } else {
         if (lockScreen) lockScreen.classList.add('active');
         
@@ -148,6 +151,8 @@ function setUiState(isLoggedIn, user = null) {
         nameEl.textContent = "ГОСТЬ";
         avatarEl.innerHTML = "?";
         creditsEl.textContent = "ВСТАВЬТЕ МОНЕТУ";
+
+        document.getElementById('reconnect-container').style.display = 'none';
     }
 }
 
@@ -283,4 +288,35 @@ function setupGlobalSfx() {
     document.querySelectorAll('a.play-btn, a.back-btn').forEach(el => {
         el.addEventListener('click', () => play('whoosh'));
     });
+}
+
+async function checkActiveBunkerGame(userId) {
+    const reconnectBtn = document.getElementById('reconnect-container');
+    
+    // 1. Ищем игрока в таблице bunker_players
+    const { data: player, error: pError } = await supabase
+        .from('bunker_players')
+        .select('room_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (pError || !player) {
+        reconnectBtn.style.display = 'none';
+        return;
+    }
+
+    // 2. Проверяем, жива ли комната и в каком она статусе
+    const { data: room, error: rError } = await supabase
+        .from('bunker_rooms')
+        .select('status, room_code')
+        .eq('id', player.room_id)
+        .maybeSingle();
+
+    // Если игра еще идет или ждет игроков — показываем кнопку
+    if (room && (room.status === 'waiting' || room.status === 'playing')) {
+        reconnectBtn.style.display = 'block';
+        console.log("Найден активный бункер:", room.room_code);
+    } else {
+        reconnectBtn.style.display = 'none';
+    }
 }
