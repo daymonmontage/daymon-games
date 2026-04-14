@@ -1,8 +1,8 @@
-/* Подтягиваем базовые стили хаба */
+
 @import url('../css/parts/1-base.css');
 @import url('../css/parts/2-effects.css');
 
-/* Локальные стили бункера */
+
 @import url('./css/1-layout.css');
 @import url('./css/2-lobby.css');
 @import url('./css/3-table.css');

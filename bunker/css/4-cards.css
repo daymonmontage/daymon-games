@@ -1,50 +1,50 @@
-/* ================================== */
-/* КРАСИВЫЕ 3D КАРТОЧКИ ХАРАКТЕРИСТИК */
-/* ================================== */
 
-/* Контейнер теперь использует Grid для двух колонок */
+
+
+
+
 .cards-container {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* Делаем 2 одинаковые колонки */
-    grid-auto-rows: min-content; /* Карточки не растягиваются некрасиво по высоте */
+    grid-template-columns: repeat(2, 1fr); 
+    grid-auto-rows: min-content; 
     gap: 15px;
     width: 100%;
-    max-width: 600px; /* Чуть расширили, чтобы карточкам не было тесно */
+    max-width: 600px; 
     
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: 15px; /* Буфер для анимации наведения */
+    padding: 15px; 
 }
 
-/* Прячем скроллбар */
+
 .cards-container::-webkit-scrollbar {
     width: 0px;
     background: transparent;
 }
 
-/* Обновленная карточка (текст теперь идет сверху вниз) */
+
 .bunker-card {
     position: relative;
     background: linear-gradient(145deg, #22222a, #13131a);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 12px;
-    padding: 12px 10px 12px 20px; /* Уменьшили боковые отступы */
+    padding: 12px 10px 12px 20px; 
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.05);
     overflow: hidden;
     will-change: transform, box-shadow;
     
-    /* Меняем внутреннюю сетку на флекс (элементы друг под другом) */
+    
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: flex-start; /* Прижимаем текст к левому краю */
+    align-items: flex-start; 
     gap: 8px;
 }
 
-/* Цветная полоса слева (остается без изменений) */
+
 .bunker-card::before {
     content: '';
     position: absolute;
@@ -55,12 +55,12 @@
     background: var(--card-color, #555);
     box-shadow: 0 0 10px var(--card-color, #555);
     transition: 0.3s;
-    /* Добавляем скругление под форму карточки */
+    
     border-top-left-radius: 11px;
     border-bottom-left-radius: 11px;
 }
 
-/* Специфичные цвета для разных типов */
+
 .bunker-card.type-profession { --card-color: #3b82f6; }
 .bunker-card.type-biology   { --card-color: #10b981; }
 .bunker-card.type-health    { --card-color: #fbbf24; }
@@ -73,7 +73,7 @@
     font-size: 1.1em;
 }
 
-/* Эффект блика */
+
 .bunker-card::after {
     content: '';
     position: absolute;
@@ -95,7 +95,7 @@
     left: 150%;
 }
 
-/* Внутренние элементы карточки */
+
 .card-key {
     font-family: var(--font-pixel);
     font-size: 0.55rem;
@@ -114,7 +114,7 @@
     text-align: left;
     font-weight: bold;
     text-shadow: 1px 1px 2px #000;
-    flex-grow: 1; /* Позволяет тексту занимать основное место */
+    flex-grow: 1; 
 }
 
 .card-action-hint {
@@ -124,7 +124,7 @@
     color: #666;
     transition: 0.2s;
     width: 100%;
-    margin-top: auto; /* Прижимает подсказку к низу */
+    margin-top: auto; 
 }
 
 .bunker-card:hover .card-action-hint {
@@ -132,7 +132,7 @@
     text-shadow: 0 0 5px var(--card-color, transparent);
 }
 
-/* Стиль раскрытой карты */
+
 .bunker-card.revealed {
     background: rgba(20, 20, 20, 0.8);
     border-color: #333;
@@ -152,26 +152,140 @@
     font-weight: 900;
     color: #555;
     position: absolute;
-    right: 15px; /* Иконка глаза теперь справа */
+    right: 15px; 
     bottom: 15px;
     background: none;
     transform: none;
     font-size: 1.2rem;
 }
 
-/* Адаптив: если играют с телефона, возвращаем в 1 столбик */
-@media (max-width: 600px) {
+
+.card-used-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(239, 68, 68, 0.25);
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    font-family: var(--font-pixel, monospace);
+    font-size: 0.55rem;
+    padding: 3px 8px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    z-index: 2;
+    white-space: nowrap;
+}
+
+
+.bunker-card.type-special.revealed::after {
+    display: none;
+}
+
+
+.bunker-card.special-active {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.5), 0 0 25px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.1) !important;
+    animation: specialPulse 1.5s ease-in-out infinite;
+}
+
+.bunker-card.special-active::before {
+    background: #f59e0b !important;
+    box-shadow: 0 0 10px #f59e0b !important;
+}
+
+.bunker-card.special-active .card-action-hint {
+    color: #f59e0b !important;
+    text-shadow: 0 0 5px rgba(245, 158, 11, 0.5);
+}
+
+@keyframes specialPulse {
+    0%, 100% { box-shadow: 0 0 12px rgba(245, 158, 11, 0.5), 0 0 25px rgba(245, 158, 11, 0.2); }
+    50% { box-shadow: 0 0 18px rgba(245, 158, 11, 0.7), 0 0 35px rgba(245, 158, 11, 0.35); }
+}
+
+
+@media (max-width: 768px) {
     .cards-container {
-        grid-template-columns: 1fr;
-        max-width: 420px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-auto-rows: min-content;
+        gap: 10px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        padding: 10px;
+        max-height: 240px; 
+        width: 100%;
+        margin-left: 0;
+        scroll-snap-type: none;
+        -webkit-overflow-scrolling: touch;
+        flex: 0 0 auto; 
+        border: 1px solid rgba(16, 185, 129, 0.05);
+        background: rgba(0,0,0,0.2);
+        border-radius: 8px;
+    }
+    
+    .cards-container::-webkit-scrollbar {
+        width: 4px;
+        background: transparent;
+    }
+    .cards-container::-webkit-scrollbar-thumb {
+        background: rgba(16, 185, 129, 0.3);
+        border-radius: 4px;
+    }
+
+    .bunker-card {
+        min-width: 0;
+        max-width: none;
+        padding: 8px 6px 8px 12px;
+        min-height: 60px;
+        gap: 4px;
+    }
+
+    .card-key {
+        font-size: 0.45rem;
+        gap: 4px;
+    }
+    
+    .card-key i {
+        font-size: 0.9em;
+    }
+
+    .card-value {
+        font-size: 0.65rem;
+        line-height: 1.2;
+    }
+
+    .card-action-hint {
+        font-size: 0.4rem;
+        margin-top: 2px;
+    }
+
+    
+    .bunker-card.revealed::after {
+        font-size: 0.8rem;
+        right: 8px;
+        bottom: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .cards-container {
+        max-height: 210px; 
+        gap: 8px;
+    }
+    .bunker-card {
+        padding: 6px 5px 6px 10px;
     }
 }
 
 
 
-/* ================================== */
-/* АНИМАЦИЯ БРОСКА КАРТЫ НА СТОЛ      */
-/* ================================== */
+
+
+
+
+
 
 @keyframes throwCardDynamic {
     0% {
@@ -179,7 +293,7 @@
         opacity: 1;
     }
     100% {
-        /* Эти значения будут переписаны JS динамически для каждого места (custom properties) */
+        
         transform: translate(var(--tx), var(--ty)) rotate(720deg) scale(0.2); 
         opacity: 0;
     }

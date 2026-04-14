@@ -8,9 +8,8 @@ body {
 
 .bunker-wrapper {
     width: 100%;
-    /* max-width: 900px;  <-- УДАЛИ ИЛИ ЗАКОММЕНТИРУЙ ЭТУ СТРОКУ */
+    
     height: 100vh;
-    max-height: 900px;
     background: #0f0f11;
     position: relative;
     display: flex;
@@ -18,6 +17,14 @@ body {
     box-shadow: 0 0 50px rgba(16, 185, 129, 0.2);
     z-index: 20;
     border: 1px solid rgba(16, 185, 129, 0.1);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+@media (min-width: 1024px) {
+    .bunker-wrapper {
+        max-height: 900px;
+    }
 }
 
 .quiz-header {
@@ -49,7 +56,7 @@ body {
     text-align: center;
 }
 
-/* --- ИНТЕРАКТИВНЫЙ ТУТОРИАЛ --- */
+
 #tutorial-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -143,3 +150,79 @@ h1, h2, h3, h4 {
     margin-bottom: 40px;
     line-height: 1.5;
 }
+
+
+.online-counter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 5px 12px;
+    border-radius: 6px;
+    color: #10b981;
+    font-family: var(--font-pixel);
+    font-size: 0.65rem;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+    white-space: nowrap;
+}
+
+.online-dot {
+    width: 6px;
+    height: 6px;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #10b981;
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.2); }
+}
+
+
+@media (max-width: 480px) {
+    .quiz-header {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+
+    .quiz-title {
+        display: none; 
+    }
+
+    .bunker-sound-controls {
+        gap: 6px !important;
+    }
+
+    .sfx-mixer, .music-mixer {
+        padding: 3px 6px !important;
+        gap: 4px !important;
+    }
+
+    
+    #bunker-sfx-slider, #bunker-music-slider {
+        width: 35px !important;
+    }
+
+    #sfx-vol-val, #music-vol-val {
+        min-width: 20px !important;
+        font-size: 0.55rem !important;
+    }
+
+    .back-btn {
+        font-size: 0.6rem;
+    }
+
+    .online-counter {
+        padding: 3px 8px;
+        font-size: 0.55rem;
+        gap: 4px;
+    }
+
+    .screen {
+        padding: 15px; 
+    }
+}
+

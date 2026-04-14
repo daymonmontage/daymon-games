@@ -1,4 +1,4 @@
-// Единое хранилище данных текущей сессии
+
 export const state = {
     currentUser: null,
     currentRoomId: null,
@@ -11,7 +11,7 @@ export const state = {
     heartbeatInterval: null
 };
 
-// Функция для удобного обновления стейта из других модулей
+
 export function setState(updates) {
     Object.assign(state, updates);
 }

@@ -12,7 +12,7 @@ export function initChat(supabase, playSFX) {
     let chatChannel = null;
     let activeRoomId = null;
 
-    // Скрываем иконку чата изначально (пока не зайдешь в лобби)
+    
     chatToggleBtn.style.display = 'none';
 
     chatToggleBtn.addEventListener('click', () => {
@@ -28,20 +28,47 @@ export function initChat(supabase, playSFX) {
     closeChatBtn.addEventListener('click', () => {
         isChatOpen = false;
         chatDrawer.classList.remove('open');
-        // Возвращаем кнопку только если мы в комнате
+        
         if (activeRoomId) chatToggleBtn.style.display = 'flex';
         if (playSFX) playSFX('click');
     });
 
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const text = chatInput.value.trim();
-        if (!text) return;
+        const textRaw = chatInput.value.trim();
+        if (!textRaw) return;
         
         chatInput.value = '';
         
         const currentUser = window._chatCurrentUser;
         if (!currentUser || !activeRoomId) return;
+
+        let finalText = textRaw;
+        let whisperTo = null;
+
+        
+        const whisperMatch = textRaw.match(/^[\/|!][w|ш]\s+@?([a-zA-Z0-9_а-яА-Я]+)\s+(.+)$/i);
+        if (whisperMatch) {
+            let targetName = whisperMatch[1];
+            const whisperText = whisperMatch[2];
+
+            
+            if (activeRoomId !== 'global' && window.bunkerPlayersCache && targetName.length >= 2) {
+                const search = targetName.toLowerCase();
+                const matches = window.bunkerPlayersCache.filter(p => 
+                    p.username.toLowerCase().startsWith(search)
+                );
+                
+                if (matches.length > 0) {
+                    
+                    const exact = matches.find(m => m.username.toLowerCase() === search);
+                    targetName = exact ? exact.username : matches[0].username;
+                }
+            }
+
+            whisperTo = targetName;
+            finalText = `[WHISPER:${whisperTo}] ${whisperText}`;
+        }
 
         try {
             if (activeRoomId === 'global') {
@@ -49,7 +76,7 @@ export function initChat(supabase, playSFX) {
                     user_id: currentUser.id,
                     username: currentUser.username || currentUser.email.split('@')[0] || "Guest",
                     avatar_url: currentUser.avatar_url,
-                    text: text
+                    text: finalText
                 });
             } else {
                 await supabase.from('bunker_chat').insert({
@@ -57,7 +84,7 @@ export function initChat(supabase, playSFX) {
                     user_id: currentUser.id,
                     username: currentUser.username || currentUser.email.split('@')[0] || "Guest",
                     avatar_url: currentUser.avatar_url,
-                    text: text
+                    text: finalText
                 });
             }
         } catch(err) {
@@ -77,27 +104,59 @@ export function initChat(supabase, playSFX) {
     function appendMessage(msg) {
         const currentUser = window._chatCurrentUser;
         const isMine = currentUser && msg.user_id === currentUser.id;
+        
+        let text = msg.text || "";
+        let isWhisper = false;
+        let whisperTarget = null;
+
+        
+        const whisperMatch = text.match(/^\[WHISPER:([^\]]+)\]\s+(.+)$/);
+        if (whisperMatch) {
+            isWhisper = true;
+            whisperTarget = whisperMatch[1];
+            text = whisperMatch[2];
+
+            const myName = currentUser ? (currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : null)) : null;
+            const amIRecipient = myName && whisperTarget.toLowerCase() === myName.toLowerCase();
+            
+            
+            if (!isMine && !amIRecipient) return;
+        }
 
         const msgEl = document.createElement('div');
-        msgEl.className = `chat-msg ${isMine ? 'mine' : ''}`;
+        msgEl.className = `chat-msg ${isMine ? 'mine' : ''} ${isWhisper ? 'whisper' : ''}`;
         
+        let headerPrefix = "";
+        if (isWhisper) {
+            headerPrefix = isMine ? `<span class="whisper-label">ШЕПОТ ДЛЯ @${whisperTarget}:</span>` : `<span class="whisper-label">ВАМ ШЕПЧУТ:</span>`;
+        }
+
         msgEl.innerHTML = `
             <div class="chat-msg-header">
                 <img src="${msg.avatar_url || 'https://via.placeholder.com/20'}" class="chat-msg-avatar">
                 <span class="chat-msg-author">${msg.username}</span>
+                ${headerPrefix}
             </div>
-            <div class="chat-msg-text">${msg.text}</div>
+            <div class="chat-msg-text">${text}</div>
         `;
 
         chatMessagesEl.appendChild(msgEl);
         chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
     }
 
+    window.setWhisper = function(username) {
+        if (!isChatOpen) {
+            chatToggleBtn.click();
+        }
+        chatInput.value = `/w @${username} `;
+        chatInput.focus();
+    }
+
     window.connectChat = async function(roomId, currentUserObj) {
         if (activeRoomId === roomId) return;
         
         activeRoomId = roomId;
-        window._chatCurrentUser = currentUserObj; // Save for local access
+        window._chatCurrentUser = currentUserObj; 
         
         if (!isChatOpen) {
             chatToggleBtn.style.display = 'flex';
@@ -114,7 +173,7 @@ export function initChat(supabase, playSFX) {
             chatChannel = null;
         }
 
-        // ЖЕСТКАЯ ОЧИСТКА: Найдём и убедимся, что нет зависших каналов
+        
         const allChannels = supabase.getChannels();
         allChannels.forEach(c => {
             if (c.topic.startsWith('realtime:chat_')) {
@@ -129,7 +188,7 @@ export function initChat(supabase, playSFX) {
             .order('created_at', { ascending: true })
             .limit(50);
             
-        // ЗАЩИТА ОТ ГОНКИ: Если игрок успел выйти из комнаты пока грузилась история
+        
         if (activeRoomId !== roomId) return;
             
         chatMessagesEl.innerHTML = '';
@@ -155,7 +214,7 @@ export function initChat(supabase, playSFX) {
                 if (!isChatOpen) {
                     unreadCount++;
                     updateBadge();
-                    if (playSFX) playSFX('click'); // notify sound
+                    if (playSFX) playSFX('click'); 
                 }
             })
             .subscribe();
@@ -180,7 +239,7 @@ export function initChat(supabase, playSFX) {
             chatChannel = null;
         }
 
-        // ЖЕСТКАЯ ОЧИСТКА: Найдём и убедимся, что нет зависших каналов чата
+        
         const allChannels = supabase.getChannels();
         allChannels.forEach(c => {
             if (c.topic.startsWith('realtime:chat_')) {
@@ -194,7 +253,7 @@ export function initChat(supabase, playSFX) {
             .order('created_at', { ascending: true })
             .limit(50);
             
-        // ЗАЩИТА ОТ ГОНКИ
+        
         if (activeRoomId !== 'global') return;
             
         chatMessagesEl.innerHTML = '';
@@ -232,7 +291,7 @@ export function initChat(supabase, playSFX) {
             chatChannel = null;
         }
         
-        // Жестко добиваем все остаточные слушатели чата
+        
         const allChannels = supabase.getChannels();
         allChannels.forEach(c => {
             if (c.topic.startsWith('realtime:chat_')) {

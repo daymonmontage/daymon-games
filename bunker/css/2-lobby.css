@@ -1,6 +1,6 @@
-/* ================================== */
-/* ЗАСТАВКА ЛОББИ (TERMINAL DASHBOARD)*/
-/* ================================== */
+
+
+
 
 .lobby-terminal {
     width: 95%;
@@ -320,7 +320,7 @@
     }
 }
 
-/* Список игроков */
+
 .players-list {
     width: 100%;
     max-width: 400px;
@@ -337,7 +337,7 @@
 
 .player-item {
     display: flex;
-    flex-direction: column; /* Теперь элементы идут сверху вниз */
+    flex-direction: column; 
     align-items: stretch;
     background: rgba(255,255,255,0.05);
     padding: 10px 15px;
@@ -390,7 +390,7 @@
     align-items: center;
     justify-content: center;
     transition: 0.2s;
-    margin-left: auto; /* Прижимаем вправо */
+    margin-left: auto; 
 }
 
 .kick-btn:hover {
@@ -399,9 +399,9 @@
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
 }
 
-/* ================================== */
-/* ПУБЛИЧНЫЕ КОМНАТЫ (РАДАР) */
-/* ================================== */
+
+
+
 
 .public-rooms-container {
     flex-grow: 1;

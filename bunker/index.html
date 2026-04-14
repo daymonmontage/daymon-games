@@ -19,36 +19,44 @@
             <a href="../index.html" class="back-btn"><i class="fas fa-arrow-left"></i> В ХАБ</a>
             <div class="quiz-title" style="color: #10b981;">BUNKER_OS_v1.0</div>
             
-            <!-- ПАНЕЛЬ УПРАВЛЕНИЯ ЗВУКОМ -->
+            
             <div class="bunker-sound-controls" style="display: flex; align-items: center; gap: 15px;">
                 
-                <!-- Микшер SFX (Звуки игры) -->
+                
                 <div class="sfx-mixer" style="display: flex; align-items: center; gap: 8px; color: #10b981; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.3);">
                     <i class="fas fa-volume-up" id="sfx-icon" title="Громкость эффектов" style="font-size: 0.8rem;"></i>
-                    <input type="range" id="bunker-sfx-slider" min="0" max="1" step="0.01" style="width: 70px; cursor: pointer; accent-color: #10b981;">
+                    <input type="range" id="bunker-sfx-slider" min="0" max="1" step="0.01" style="width: 50px; cursor: pointer; accent-color: #10b981;">
+                    <span id="sfx-vol-val" style="font-size: 0.65rem; min-width: 28px; text-align: right; color: #10b981; font-family: var(--font-pixel);">10%</span>
+                </div>
+
+                
+                <div class="music-mixer" style="display: flex; align-items: center; gap: 8px; color: #8b5cf6; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(139, 92, 246, 0.3);">
+                    <i class="fas fa-music" id="music-icon" title="Громкость музыки" style="font-size: 0.8rem;"></i>
+                    <input type="range" id="bunker-music-slider" min="0" max="1" step="0.01" style="width: 50px; cursor: pointer; accent-color: #8b5cf6;">
+                    <span id="music-vol-val" style="font-size: 0.65rem; min-width: 28px; text-align: right; color: #8b5cf6; font-family: var(--font-pixel);">10%</span>
+                    <button id="bunker-mute-btn" title="Музыка (вкл/выкл)" style="background: transparent; border: none; color: #8b5cf6; cursor: pointer; padding: 0 5px;">
+                        <i class="fas fa-play"></i>
+                    </button>
                 </div>
                 
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <!-- Кнопка Обучения (Скрыта в лобби, показываем только в игре) -->
-                    <button id="tutorial-trigger-btn" title="Повторить обучение" style="background: rgba(59,130,246,0.2); border: 1px solid #3b82f6; color: #3b82f6; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; transition: 0.3s; display: none; align-items: center; justify-content: center;">
-                        <i class="fas fa-question"></i>
-                    </button>
+                
+                <button id="tutorial-trigger-btn" title="Повторить обучение" style="background: rgba(59,130,246,0.2); border: 1px solid #3b82f6; color: #3b82f6; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; transition: 0.3s; display: none; align-items: center; justify-content: center;">
+                    <i class="fas fa-question"></i>
+                </button>
 
-                    <!-- Кнопка Музыки -->
-                    <button id="bunker-mute-btn" title="Музыка" style="background: rgba(0,0,0,0.5); border: 1px solid #10b981; color: #10b981; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-music"></i>
-                    </button>
+                
+                <div id="bunker-online-count" class="online-counter" title="Игроков в сети">
+                    <span class="online-dot"></span>
+                    <span id="online-count-val">...</span>
                 </div>
             </div>
         </header>
 
-        <!-- Экран Лобби -->
+        
         <div id="lobby-screen" class="screen active">
             <div class="lobby-terminal">
                 <div class="terminal-header">
-                    <span class="dot red"></span>
-                    <span class="dot yellow"></span>
-                    <span class="dot green"></span>
+
                     <span class="terminal-title">BUNKER_UPLINK.exe</span>
                 </div>
                 
@@ -75,6 +83,10 @@
                                     <i class="fas fa-plus"></i> ИНИЦИАЛИЗИРОВАТЬ
                                 </button>
                                 
+                                <button id="reconnect-room-btn" class="neon-btn" style="display: none; background: rgba(139, 92, 246, 0.1); border-color: #8b5cf6; color: #8b5cf6; margin-top: 10px; width: 100%;">
+                                    <i class="fas fa-undo"></i> ВЕРНУТЬСЯ В ИГРУ
+                                </button>
+                                
                                 <div class="join-box">
                                     <input type="text" id="room-code-input" placeholder="КОД ДОСТУПА" maxlength="6">
                                     <button id="join-room-btn" class="neon-btn join-btn"><i class="fas fa-sign-in-alt"></i> ПОДКЛЮЧИТЬСЯ</button>
@@ -82,7 +94,7 @@
                             </div>
                         </div>
 
-                        <!-- Список публичных комнат -->
+                        
                         <div class="lobby-panel radar-panel">
                              <h3 class="panel-heading radar-heading">
                                  <span><i class="fas fa-satellite-dish"></i> РАДАР</span>
@@ -101,13 +113,13 @@
             </div>
         </div>
 
-        <!-- Экран ожидания в комнате -->
+        
         <div id="waiting-screen" class="screen">
             <h2 style="color: #10b981;">КОМНАТА: <span id="current-room-code">---</span></h2>
             <p>Ожидание игроков...</p>
             
             <div class="players-list" id="players-list">
-                <!-- Сюда будут добавляться игроки -->
+                
             </div>
 
             <div style="display: flex; gap: 10px; width: 100%; max-width: 400px; margin-top: 20px;">
@@ -117,7 +129,7 @@
 
         </div>
 
-        <!-- Экран самой игры (Бункер) -->
+        
         <div id="game-screen" class="screen">
             <div class="game-layout">
                 <div class="game-col cards-col">
@@ -140,6 +152,7 @@
                             </div>
 
                         <div class="game-actions">
+                            <button class="neon-btn" onclick="document.getElementById('lore-modal').classList.add('active')" style="background: rgba(16, 185, 129, 0.1); border-color: #10b981; color: #10b981; width: 100%; margin-bottom: 10px;"><i class="fas fa-scroll"></i> СЮЖЕТ БУНКЕРА</button>
                             <button id="start-vote-btn" class="neon-btn" style="display: none; background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #ef4444; width: 100%;">НАЧАТЬ ГОЛОСОВАНИЕ</button>
                             <button id="end-vote-btn" class="neon-btn" style="display: none; background: #ef4444; color: #000; width: 100%;">ЗАВЕРШИТЬ ГОЛОСОВАНИЕ</button>
                             <button class="neon-btn leave-game-btn" style="background: rgba(16, 185, 129, 0.1); border-color: #10b981; color: #10b981; width: 100%;">ПОКИНУТЬ БУНКЕР</button>
@@ -150,7 +163,7 @@
         </div>
     </div>
 
-    <!-- ЧАТ В БУНКЕРЕ -->
+    
     <div id="chat-toggle-btn" class="chat-toggle">
         <i class="fas fa-comment-dots"></i>
         <span id="chat-unread-badge" class="chat-badge" style="display: none;">0</span>
@@ -162,7 +175,7 @@
             <button id="close-chat-btn"><i class="fas fa-times"></i></button>
         </div>
         <div id="chat-messages" class="chat-messages">
-            <!-- Messages go here -->
+            
         </div>
         <form id="chat-form" class="chat-input-area">
             <input type="text" id="chat-input" placeholder="Введите сообщение..." autocomplete="off" maxlength="150" required>
@@ -170,7 +183,7 @@
         </form>
     </div>
 
-    <!-- Окно конца игры -->
+    
     <div id="game-over-modal" class="modal-overlay">
         <div class="modal-content">
             <i class="fas fa-trophy" style="font-size: 3rem; color: #fbbf24; margin-bottom: 15px;"></i>
@@ -184,8 +197,8 @@
         </div>
     </div>
 
-    <!-- Окно голосования (ТЕПЕРЬ СКРЫТО, ТАК КАК ГОЛОСОВАНИЕ ИДЕТ НА СТОЛЕ) -->
-    <!-- Оставлено для совместимости или может быть удалено (мы удаляем содержимое, так как оно больше не нужно) -->
+    
+    
     <div id="vote-modal" class="modal-overlay" style="display: none !important;">
         <div class="modal-content">
             <div id="vote-options" class="vote-options"></div>
@@ -193,7 +206,7 @@
         </div>
     </div>
 
-    <!-- Кастомное окно подтверждения -->
+    
     <div id="custom-confirm-modal" class="modal-overlay">
         <div class="modal-content">
             <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #f59e0b; margin-bottom: 15px;"></i>
@@ -212,7 +225,7 @@
         </div>
     </div>
 
-    <!-- Кастомное окно ALERT -->
+    
     <div id="custom-alert-modal" class="modal-overlay">
         <div class="modal-content">
             <i class="fas fa-info-circle" style="font-size: 3rem; color: #3b82f6; margin-bottom: 15px;"></i>
@@ -229,14 +242,39 @@
             
             <div class="settings-form">
                 <div class="setting-group">
-                    <label>ВМЕСТИМОСТЬ (ИГРОКОВ):</label>
+                    <label>ВМЕСТИМОСТЬ (ИГРОКОВ В КОМНАТЕ):</label>
                     <input type="range" id="setting-max-players" min="4" max="15" value="10" oninput="document.getElementById('players-val').textContent = this.value">
                     <div style="text-align: right; color: #10b981; font-family: var(--font-pixel); font-size: 0.7rem;">ВЫБРАНО: <span id="players-val">10</span></div>
                 </div>
 
                 <div class="setting-group">
+                    <label>МЕСТ В БУНКЕРЕ (СКОЛЬКО ВЫЖИВЕТ):</label>
+                    <input type="range" id="setting-survivors" min="1" max="10" value="5" oninput="document.getElementById('survivors-val').textContent = this.value">
+                    <div style="text-align: right; color: #3b82f6; font-family: var(--font-pixel); font-size: 0.7rem;">ВЫЖИВШИХ: <span id="survivors-val">5</span></div>
+                </div>
+
+                <div class="setting-group" style="position: relative;">
+                    <label>СЮЖЕТ (ЛОР):</label>
+                    <div style="display: flex; gap: 5px;">
+                        <select id="setting-lore" style="flex: 1; background: rgba(0,0,0,0.8); border: 1px solid #10b981; color: #10b981; padding: 10px; border-radius: 4px; outline: none; font-family: var(--font-main);">
+                            <option value="preset_nuclear">☢️ Ядерная Зима</option>
+                            <option value="preset_zombie">🧟 Вспышка Z-Вируса</option>
+                            <option value="preset_ai">🤖 Коллапс ИИ</option>
+                            <option value="preset_meteor">☄️ Падение Метеорита</option>
+                            <option value="preset_flood">🌊 Глобальный Потоп</option>
+                            <option value="auto_beta">🔮 случайный (БЕТА-Генератор)</option>
+                        </select>
+                        <button id="lore-reroll-btn" style="display: none; background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; border-radius: 4px; width: 40px; cursor: pointer; transition: 0.2s;"><i class="fas fa-dice"></i></button>
+                    </div>
+                    
+                    <div id="lore-preview-box" style="margin-top: 10px; padding: 10px 15px; background: rgba(16, 185, 129, 0.05); border-left: 2px solid #10b981; border-radius: 4px; display: none;">
+                        <p id="lore-preview-text" style="color: #a1a1aa; font-size: 0.75rem; margin: 0; line-height: 1.4; font-family: var(--font-main); white-space: pre-wrap;"></p>
+                    </div>
+                </div>
+
+                <div class="setting-group">
                     <label>ТИП КОМНАТЫ:</label>
-                    <select id="setting-privacy">
+                    <select id="setting-privacy" style="background: rgba(0,0,0,0.8); border: 1px solid #10b981; color: #10b981; padding: 10px; width: 100%; border-radius: 4px; outline: none; font-family: var(--font-main);">
                         <option value="public">ПУБЛИЧНАЯ (ВИДНО НА РАДАРЕ)</option>
                         <option value="private">ПРИВАТНАЯ (ТОЛЬКО ПО КОДУ)</option>
                     </select>
@@ -281,7 +319,7 @@
         </div>
     </div>
 
-    <!-- Модалка Правил -->
+    
     <div class="modal-overlay" id="rules-modal">
         <div class="modal-content" style="max-width: 800px; text-align: left; background: #0a0a0c; border: 1px solid rgba(59, 130, 246, 0.3);">
             <h2 style="color: #3b82f6; text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); font-family: var(--font-pixel); margin-bottom: 10px; text-align: center; font-size: 1.5rem;">
@@ -340,13 +378,45 @@
                     </li>
                 </ul>
 
+                <div style="margin-top: 25px; padding: 15px; border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 4px; background: rgba(251, 191, 36, 0.05);">
+                    <h4 style="color: #fbbf24; margin-bottom: 10px; font-family: var(--font-pixel);"><i class="fas fa-crown"></i> ДЛЯ ЛИДЕРА (СОЗДАТЕЛЯ КОМНАТЫ)</h4>
+                    <p style="font-size: 0.9rem; color: #d1d5db; margin-bottom: 10px;">Как Хост (Лидер), вы являетесь главным судьей игры. Автоматика защищает от читеров, но вся социальная часть — на вас!</p>
+                    <ul style="padding-left: 20px; font-size: 0.85rem; color: #9ca3af; list-style-type: square;">
+                        <li style="margin-bottom: 5px;"><strong>Контроль Дебатов:</strong> Дайте каждому игроку слово. Останавливайте перебивания. Вы задаете ритм (например, 1 минута на выступление каждого).</li>
+                        <li style="margin-bottom: 5px;"><strong>Одобрение:</strong> Хост лично открывает и закрывает окно голосования. Начинайте голосование только после того, как все высказались.</li>
+                        <li style="margin-bottom: 5px;"><strong>Вскрытие Спецух:</strong> Если игрок вскрывает "Спецуху", которая ломает игру (например, "Изменить результат голосования" или "Покинуть стол"), <strong>ИМЕННО ВЫ АНОНСИРУЕТЕ</strong>, что эффект спецухи легален, и отменяете изгнание/слышите переголосование. Вы — верховный закон.</li>
+                    </ul>
+                </div>
+
                 <div style="margin-top: 25px; padding: 15px; border: 1px dashed rgba(239, 68, 68, 0.5); border-radius: 4px; background: rgba(239, 68, 68, 0.05); text-align: center;">
                     <strong style="color: #ef4444; font-size: 1rem;"><i class="fas fa-exclamation-triangle"></i> ВНИМАНИЕ:</strong> Никому не доверяйте. Игра идёт до тех пор, пока число выживших не совпадёт со вместимостью бункера. Удачи.
                 </div>
 
             </div>
             <div class="modal-actions" style="margin-top: 20px;">
-                <button class="neon-btn" onclick="document.getElementById('rules-modal').classList.remove('active')" style="background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; color: #3b82f6; width: 100%; font-size: 1.1rem; padding: 15px; font-weight: bold; letter-spacing: 1px;">Я ГОТОВ ВЫЖИВАТЬ</button>
+                <button class="neon-btn" onclick="document.getElementById('rules-modal').classList.remove('active')" style="background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; color: #3b82f6; width: 100%; font-size: 1.1rem; padding: 15px; font-weight: bold; letter-spacing: 1px;"><i class="fas fa-check"></i> ОЗНАКОМЛЕН</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="lore-modal">
+        <div class="modal-content" style="max-width: 600px; text-align: left; background: #0a0a0c; border: 1px solid rgba(16, 185, 129, 0.3);">
+            <h2 style="color: #10b981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.5); font-family: var(--font-pixel); margin-bottom: 10px; text-align: center; font-size: 1.5rem;">
+                <i class="fas fa-radiation"></i> ДАННЫЕ О КАТАСТРОФЕ
+            </h2>
+            <div style="text-align: center; color: #6b7280; font-size: 0.75rem; margin-bottom: 25px; font-family: var(--font-pixel); letter-spacing: 1px;">ЖУРНАЛ СИСТЕМЫ ВЫЖИВАНИЯ</div>
+            
+            <div class="rules-text" style="color: #d1d5db; font-size: 0.95rem; line-height: 1.6; max-height: 65vh; overflow-y: auto; padding-right: 15px;">
+                <div style="background: rgba(16, 185, 129, 0.05); padding: 20px; border-left: 3px solid #10b981; margin-bottom: 25px; border-radius: 4px; font-family: var(--font-main);">
+                    <p id="game-lore-text" style="margin: 0; white-space: pre-wrap;">[ДАННЫЕ ЗАСЕКРЕЧЕНЫ ИЛИ НЕ ЗАГРУЖЕНЫ]</p>
+                </div>
+                <div style="margin-top: 15px; padding: 10px; border: 1px dashed rgba(251, 191, 36, 0.5); border-radius: 4px; background: rgba(251, 191, 36, 0.05); text-align: center;">
+                    <strong style="color: #fbbf24; font-size: 0.85rem;"><i class="fas fa-info-circle"></i> ИНСТРУКЦИЯ:</strong> Стройте защиту, опираясь на внешние угрозы и особенности бункера. Ваша характеристика должна стать ключом к спасению в этих конкретных условиях!
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px;">
+                <button id="voice-lore-btn" class="neon-btn" style="background: rgba(139, 92, 246, 0.1); border-color: #8b5cf6; color: #8b5cf6; width: 100%; font-size: 1.1rem; padding: 15px; font-weight: bold; letter-spacing: 1px; display: none;" onclick="window.playLoreAudio()"><i class="fas fa-volume-up"></i> ОЗВУЧИТЬ ЛОР (Soon)</button>
+                <button class="neon-btn" onclick="document.getElementById('lore-modal').classList.remove('active')" style="background: rgba(16, 185, 129, 0.1); border-color: #10b981; color: #10b981; width: 100%; font-size: 1.1rem; padding: 15px; font-weight: bold; letter-spacing: 1px;"><i class="fas fa-check"></i> ПРОЧИТАЛ</button>
             </div>
         </div>
     </div>

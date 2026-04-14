@@ -1,8 +1,8 @@
-/* ================================== */
-/* СИСТЕМА ЧАТА (ВСПЛЫВАЮЩЕЕ ОКНО)    */
-/* ================================== */
 
-/* Кнопка открытия чата */
+
+
+
+
 .chat-toggle {
     position: fixed;
     bottom: 30px;
@@ -52,7 +52,7 @@
     50% { transform: scale(1.3); }
 }
 
-/* Выдвижная панель чата */
+
 .chat-drawer {
     position: fixed;
     top: 0;
@@ -123,7 +123,7 @@
     border-radius: 5px;
 }
 
-/* Сообщение */
+
 .chat-msg {
     display: flex;
     flex-direction: column;
@@ -184,6 +184,29 @@
     border-bottom-right-radius: 0;
 }
 
+.chat-msg.whisper .chat-msg-text {
+    background: rgba(139, 92, 246, 0.1) !important;
+    border-left: 2px solid #8b5cf6 !important;
+    font-style: italic;
+}
+
+.chat-msg.mine.whisper .chat-msg-text {
+    border-left: none !important;
+    border-right: 2px solid #8b5cf6 !important;
+}
+
+.whisper-label {
+    font-size: 0.6rem;
+    color: #8b5cf6;
+    font-family: var(--font-pixel);
+    margin-left: 5px;
+    background: rgba(139, 92, 246, 0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+    text-transform: uppercase;
+}
+
+
 .chat-msg.system .chat-msg-text {
     background: transparent;
     color: #fbbf24;
@@ -195,7 +218,7 @@
     margin: 0 auto;
 }
 
-/* Ввод */
+
 .chat-input-area {
     display: flex;
     padding: 15px;

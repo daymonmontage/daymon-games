@@ -1,10 +1,10 @@
 export function startTutorial() {
-    // Если уже пройдено и не принудительно, выходим
+    
     if (localStorage.getItem('bunker_tutorial_passed') === 'true' && !window._forceTutorial) {
         return;
     }
     
-    window._forceTutorial = false; // сбрасываем флаг
+    window._forceTutorial = false; 
 
     const steps = [
         {
@@ -41,7 +41,7 @@ export function startTutorial() {
 
     let currentStep = 0;
     
-    // Создаем элементы туториала
+    
     let overlay = document.getElementById('tutorial-overlay');
     if (!overlay) {
         overlay = document.createElement('div');
@@ -79,7 +79,7 @@ export function startTutorial() {
     overlay.classList.add('active');
     currentStep = 0;
     
-    // Дождемся отрисовки
+    
     setTimeout(() => {
         renderStep();
     }, 500);
@@ -107,15 +107,15 @@ export function startTutorial() {
         prevBtn.style.opacity = currentStep === 0 ? "0.5" : "1";
         prevBtn.style.pointerEvents = currentStep === 0 ? "none" : "all";
 
-        // Позиционируем hole
+        
         const hole = document.getElementById('tutorial-hole');
         const dialog = document.getElementById('tutorial-dialog');
         
-        // Пытаемся найти таргет
+        
         const targetEl = document.querySelector(step.target);
         if (targetEl && (targetEl.offsetWidth > 0 || targetEl.offsetHeight > 0)) {
             const rect = targetEl.getBoundingClientRect();
-            // Делаем небольшие отступы
+            
             const padding = 15;
             
             hole.style.width = `${rect.width + padding*2}px`;
@@ -125,15 +125,15 @@ export function startTutorial() {
             hole.style.borderRadius = "10px";
             hole.style.opacity = "1";
             
-            // Заставляем таргет быть поверх дырки
+            
             targetEl.style.zIndex = "10002";
             targetEl.dataset.tutorialZ = "true";
 
-            // Вычисляем позицию диалога
-            // Центрируем относительно таргета
+            
+            
             let dialogLeft = rect.left + rect.width/2 - dialog.offsetWidth/2;
             
-            // Ограничиваем, чтобы не улетело за левый или правый край экрана
+            
             const maxLeft = window.innerWidth - dialog.offsetWidth - 20;
             dialogLeft = Math.max(20, Math.min(maxLeft, dialogLeft));
             
@@ -145,7 +145,7 @@ export function startTutorial() {
                 dialog.style.top = `${Math.min(window.innerHeight - dialog.offsetHeight - 20, rect.bottom + 40)}px`;
             }
         } else {
-            // Фолбэк, если элемента вдруг нет на экране или он дисплей нон
+            
             hole.style.opacity = "0";
             dialog.style.left = `${window.innerWidth/2 - dialog.offsetWidth/2}px`;
             dialog.style.top = `${window.innerHeight/2 - dialog.offsetHeight/2}px`;
@@ -158,7 +158,7 @@ export function startTutorial() {
         localStorage.setItem('bunker_tutorial_passed', 'true');
         overlay.classList.remove('active');
         
-        // Чистим z-index
+        
         document.querySelectorAll('[data-tutorial-z="true"]').forEach(el => {
             el.style.zIndex = "";
             el.removeAttribute('data-tutorial-z');
