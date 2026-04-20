@@ -35,13 +35,15 @@ hubMusic.volume = 0.10;
     const stepMultiplier = isQuickLoad ? 20 : 5; 
 
     const interval = setInterval(() => {
-        progress += 2 + Math.random() * stepMultiplier;
+        // Ускоряем прогресс
+        progress += (2 + Math.random() * stepMultiplier);
         if (progress > 100) progress = 100;
 
-        barFill.style.width = progress + "%";
-        percentEl.textContent = Math.floor(progress) + "%";
+        if (barFill) barFill.style.width = progress + "%";
+        if (percentEl) percentEl.textContent = Math.floor(progress) + "%";
 
-        const logChance = isQuickLoad ? 0.1 : 0.8; 
+        // Логирование (независимое от прогресс-бара)
+        const logChance = isQuickLoad ? 0.4 : 0.8; 
         if (Math.random() < logChance && msgIndex < bootMessages.length) {
             const div = document.createElement('div');
             const text = bootMessages[msgIndex];
@@ -54,10 +56,24 @@ hubMusic.volume = 0.10;
             msgIndex++;
         }
 
+        // Выход: когда бар полон ИЛИ прошло слишком много времени
         if (progress >= 100) {
-            clearInterval(interval);
-            sessionStorage.setItem('arcade_loaded', 'true');
-            setTimeout(() => { loader.classList.add('fade-out'); }, 200);
+            // Если сообщения еще идут, ускоряем их вывод
+            if (msgIndex < bootMessages.length) {
+                const div = document.createElement('div');
+                div.className = 'log-line';
+                div.textContent = `> ${bootMessages[msgIndex++]}`;
+                logContainer.appendChild(div);
+            } else {
+                clearInterval(interval);
+                setTimeout(() => {
+                    loader.style.opacity = '0';
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                        sessionStorage.setItem('arcade_loaded', 'true');
+                    }, 1000);
+                }, 500);
+            }
         }
     }, speed);
 })();
@@ -115,6 +131,7 @@ async function initApp() {
 
     setupHubSound();
     setupLeaderboardModal();
+    setupFeedbackModal(); // Инициализация почтового ящика
     setupGlobalSfx();
 }
 
@@ -137,6 +154,10 @@ function setUiState(isLoggedIn, user = null) {
         const avatarUrl = meta.avatar_url;
 
         nameEl.textContent = userName.toUpperCase();
+        
+        // Предзаполнение имени в форме обратной связи
+        const feedbackNameInput = document.getElementById('feedback-name');
+        if (feedbackNameInput) feedbackNameInput.value = userName;
         if (avatarUrl) avatarEl.innerHTML = `<img src="${avatarUrl}" alt="P1">`;
         creditsEl.textContent = "CREDITS: ∞";
 
@@ -158,17 +179,70 @@ function setUiState(isLoggedIn, user = null) {
 
 function setupHubSound() {
     const muteBtn = document.getElementById('hub-mute-btn');
+    const volSlider = document.getElementById('hub-volume-slider');
+    const volVal = document.getElementById('hub-vol-val');
+    
     let isMuted = localStorage.getItem('arcade_muted') === 'true';
+    let currentVol = localStorage.getItem('arcade_vol') !== null ? parseFloat(localStorage.getItem('arcade_vol')) : 0.10;
+
+    hubMusic.volume = isMuted ? 0 : currentVol;
+    if (volSlider) volSlider.value = currentVol;
+    if (volVal) volVal.textContent = Math.round(currentVol * 100) + '%';
 
     const updateUI = () => {
         const icon = muteBtn.querySelector('i');
-        icon.className = isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
+        icon.className = isMuted ? 'fas fa-volume-mute' : (currentVol > 0 ? 'fas fa-volume-up' : 'fas fa-volume-mute');
         muteBtn.classList.toggle('muted', isMuted);
-        isMuted ? hubMusic.pause() : hubMusic.play().catch(() => {});
+        hubMusic.volume = isMuted ? 0 : currentVol;
+        if (volSlider) volSlider.value = currentVol;
+        if (volVal) volVal.textContent = Math.round(currentVol * 100) + '%';
+        
+        if (!isMuted && currentVol > 0) {
+            hubMusic.play().catch(() => {});
+        } else {
+            hubMusic.pause();
+        }
     };
 
+    if (volSlider) {
+        volSlider.addEventListener('input', (e) => {
+            currentVol = parseFloat(e.target.value);
+            isMuted = currentVol === 0;
+            localStorage.setItem('arcade_vol', currentVol);
+            localStorage.setItem('arcade_muted', isMuted);
+            updateUI();
+        });
+
+        // Поддержка колесика мыши
+        volSlider.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const step = 0.05;
+            const delta = e.deltaY < 0 ? step : -step;
+            currentVol = Math.min(1, Math.max(0, currentVol + delta));
+            isMuted = currentVol === 0;
+            localStorage.setItem('arcade_vol', currentVol);
+            localStorage.setItem('arcade_muted', isMuted);
+            updateUI();
+        }, { passive: false });
+    }
+
+    // Также добавляем поддержку колесика на всю панель управления звуком
+    const controlsArea = document.querySelector('.hub-sound-controls');
+    if (controlsArea) {
+        controlsArea.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const step = 0.05;
+            const delta = e.deltaY < 0 ? step : -step;
+            currentVol = Math.min(1, Math.max(0, currentVol + delta));
+            isMuted = currentVol === 0;
+            localStorage.setItem('arcade_vol', currentVol);
+            localStorage.setItem('arcade_muted', isMuted);
+            updateUI();
+        }, { passive: false });
+    }
+
     const unlock = () => {
-        if (!isMuted) hubMusic.play().then(() => {
+        if (!isMuted && currentVol > 0) hubMusic.play().then(() => {
             document.removeEventListener('click', unlock);
         }).catch(() => {});
     };
@@ -177,6 +251,7 @@ function setupHubSound() {
     muteBtn.onclick = (e) => {
         e.stopPropagation();
         isMuted = !isMuted;
+        if (!isMuted && currentVol === 0) currentVol = 0.1; // Если был 0, ставим дефолт
         localStorage.setItem('arcade_muted', isMuted);
         updateUI();
     };
@@ -308,15 +383,103 @@ async function checkActiveBunkerGame(userId) {
     // 2. Проверяем, жива ли комната и в каком она статусе
     const { data: room, error: rError } = await supabase
         .from('bunker_rooms')
-        .select('status, room_code')
+        .select('status, room_code, last_active')
         .eq('id', player.room_id)
         .maybeSingle();
 
-    // Если игра еще идет или ждет игроков — показываем кнопку
+    // Если игра еще идет или ждет игроков — проверяем на свежесть
     if (room && (room.status === 'waiting' || room.status === 'playing')) {
-        reconnectBtn.style.display = 'block';
-        console.log("Найден активный бункер:", room.room_code);
+        const lastActive = new Date(room.last_active);
+        const now = new Date();
+        const diffInMinutes = (now - lastActive) / 1000 / 60;
+
+        // Если хост не подавал сигналов более 60 минут — считаем комнату мертвой
+        if (diffInMinutes < 60) {
+            reconnectBtn.style.display = 'block';
+            console.log("Найден активный бункер:", room.room_code);
+        } else {
+            reconnectBtn.style.display = 'none';
+        }
     } else {
         reconnectBtn.style.display = 'none';
     }
 }
+
+// === СИСТЕМА ОБРАТНОЙ СВЯЗИ (TELEGRAM BOT) ===
+function setupFeedbackModal() {
+    const triggerBtn = document.getElementById('feedback-trigger-btn');
+    const modal = document.getElementById('feedback-modal');
+    const closeBtn = document.getElementById('close-feedback-btn');
+    const form = document.getElementById('feedback-form');
+    const statusEl = document.getElementById('feedback-status');
+
+    if (!triggerBtn || !modal || !form) return;
+
+    const TG_BOT_TOKEN = '7589435895:AAGqctK-hnYRjmBonADDUQwp8V5ZQEgdi7k';
+    const TG_CHAT_ID = '1202772510';
+
+    triggerBtn.onclick = () => {
+        modal.classList.add('active');
+        statusEl.textContent = '';
+        statusEl.className = 'feedback-status';
+    };
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+    };
+
+    closeBtn.onclick = closeModal;
+    modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const submitBtn = form.querySelector('.submit-feedback-btn');
+        const name = document.getElementById('feedback-name').value;
+        const type = form.querySelector('input[name="feedback-type"]:checked').value;
+        const message = document.getElementById('feedback-msg').value;
+
+        // Блокировка кнопки
+        submitBtn.disabled = true;
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> СИГНАЛ УХОДИТ...';
+        statusEl.textContent = '';
+
+        const text = `📬 *НОВОЕ ПОСЛАНИЕ!*\n\n👤 *От:* ${name}\n🏷️ *Тип:* ${type}\n📝 *Сообщение:* ${message}\n🌐 *Источник:* Arcade Hub`;
+
+        try {
+            const response = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: TG_CHAT_ID,
+                    text: text,
+                    parse_mode: 'Markdown'
+                })
+            });
+
+            if (response.ok) {
+                statusEl.textContent = '✅ ПОСЛАНИЕ ДОСТАВЛЕНО В БУНКЕР!';
+                statusEl.className = 'feedback-status success';
+                form.reset();
+                
+                // Если залогинен, возвращаем имя
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session && session.user) {
+                    const userName = session.user.user_metadata.full_name || session.user.user_metadata.name || "";
+                    document.getElementById('feedback-name').value = userName;
+                }
+
+                setTimeout(closeModal, 2000);
+            } else {
+                throw new Error('Signal lost');
+            }
+        } catch (err) {
+            statusEl.textContent = '❌ ОШИБКА СВЯЗИ. ПОПРОБУЙ ЕЩЕ РАЗ.';
+            statusEl.className = 'feedback-status error';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    };
+}

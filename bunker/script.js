@@ -4,7 +4,7 @@ import { showScreen, showError, showAlert, showConfirm, screens } from './js/ui.
 import { renderPlayersList, renderMyCards, renderVoteOptions } from './js/render.js';
 import { initChat } from './js/chat.js';
 import { startTutorial } from './js/tutorial.js';
-import { LORE_PRESETS, generateBetaLore } from './js/lore.js';
+import { LORE_PRESETS, generateBetaLore, generateBunkerConditions } from './js/lore.js';
 import './js/animations.js';
 
 window.BUNKER_DATA_REF = BUNKER_DATA;
@@ -30,6 +30,8 @@ const startGameBtn = document.getElementById('start-game-btn');
 const myCardsContainer = document.getElementById('my-cards');
 
 document.addEventListener('DOMContentLoaded', async () => {
+    setupFeedbackModal(); // Инициализация почтового ящика (ранняя)
+    
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
         showAlert("Для игры в Бункер необходимо авторизоваться через Discord в главном меню!", () => {
@@ -59,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     initChat(supabase, window.playBunkerSFX);
-
+    setupFeedbackModal(); // Инициализация почтового ящика
     
     await checkExistingRoom();
 
@@ -104,17 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateLorePreview();
 
     
-    const maxPlayersInput = document.getElementById('setting-max-players');
-    const survivorsInput = document.getElementById('setting-survivors');
-    maxPlayersInput.addEventListener('input', () => {
-        const val = parseInt(maxPlayersInput.value);
-        survivorsInput.max = val;
-        
-        if (parseInt(survivorsInput.value) > val) {
-            survivorsInput.value = val;
-            document.getElementById('survivors-val').textContent = val;
-        }
-    });
+
 
     loadPublicRooms();
     lobbyRoomsTimer = setInterval(loadPublicRooms, 5000);
@@ -166,9 +158,96 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
+    
+    // --- НОВОЕ: ОБРАБОТЧИК ДОСРОЧНОГО ФИНАЛА ---
+    const forceEndBtn = document.getElementById('force-end-game-btn');
+    if (forceEndBtn) {
+        forceEndBtn.addEventListener('click', () => {
+            if (!isHost) return;
+            showConfirm("Вы уверены, что хотите досрочно завершить игру? Выживут все, кто сейчас остался за столом, и игра перейдет к Эпилогу.", async () => {
+                await supabase.from('bunker_rooms').update({ 
+                    status: 'epilogue',
+                    voting_active: false 
+                }).eq('id', currentRoomId);
+                window.playBunkerSFX('alarm');
+            });
+        });
+    }
 });
 
 
+// === ЛОГИКА ПРЕЗЕНТАЦИИ КАРТЫ НА СТОЛЕ ===
+let tableCardTimeout = null; // Глобальная переменная для хранения таймера
+
+window.displayTableCard = function(payload) {
+    const container = document.getElementById('table-card-presentation');
+    if (!container) return;
+
+    // Очищаем предыдущий таймер, если карточка уже была открыта
+    if (tableCardTimeout) {
+        clearTimeout(tableCardTimeout);
+        tableCardTimeout = null;
+    }
+
+    const getCardType = (label) => {
+        const types = { 'Профессия': 'profession', 'Биология': 'biology', 'Телосложение': 'body', 'Характер': 'character', 'Привычка': 'habit', 'Здоровье': 'health', 'Хобби': 'trait', 'Фобия': 'trait', 'Багаж': 'equipment', 'Факт': 'trait', 'Спецуха': 'special' };
+        return types[label] || 'default';
+    };
+    const getCardIcon = (label) => {
+        const icons = { 'Профессия': 'fa-user-tie', 'Биология': 'fa-dna', 'Телосложение': 'fa-child', 'Характер': 'fa-masks-theater', 'Привычка': 'fa-smoking', 'Здоровье': 'fa-heartbeat', 'Хобби': 'fa-gamepad', 'Фобия': 'fa-ghost', 'Багаж': 'fa-briefcase', 'Факт': 'fa-info-circle', 'Спецуха': 'fa-star' };
+        return icons[label] || 'fa-id-card';
+    };
+
+    const type = getCardType(payload.cardKey);
+    const icon = getCardIcon(payload.cardKey);
+
+    // Меняем цвет рамки в зависимости от типа карты
+    const colors = { 'profession': '#3b82f6', 'biology': '#10b981', 'body': '#ec4899', 'character': '#f97316', 'habit': '#b91c1c', 'health': '#fbbf24', 'trait': '#a855f7', 'equipment': '#ef4444', 'special': '#f59e0b', 'default': '#fff' };
+    container.style.borderColor = colors[type];
+    container.style.boxShadow = `0 0 50px rgba(0,0,0,0.9), 0 0 30px ${colors[type]}66`;
+
+    container.innerHTML = `
+        <button class="tcp-close-btn" id="tcp-close-btn" title="Свернуть карту"><i class="fas fa-times"></i></button>
+        <div class="tcp-header">
+            ИГРОК <span class="tcp-player-name">${payload.userName}</span><br>ОТКРЫВАЕТ КАРТУ:
+        </div>
+        <div class="bunker-card type-${type}" style="width: 100%; cursor: default; transform: none; box-shadow: none; pointer-events: none;">
+            <div class="card-key"><i class="fas ${icon}"></i> ${payload.cardKey}</div>
+            <div class="card-value" style="font-size: 0.85rem; text-align: left; padding: 10px 0;">${payload.cardValue}</div>
+        </div>
+    `;
+
+    // Кнопка закрытия доступна только тому, кто открыл карту, ИЛИ хосту комнаты
+    const closeBtn = document.getElementById('tcp-close-btn');
+    if (payload.userId === currentUser.id || isHost) {
+        closeBtn.style.display = 'flex';
+        closeBtn.onclick = () => {
+            window.hideTableCard();
+            if (realtimeChannel) {
+                realtimeChannel.send({ type: 'broadcast', event: 'hide_table_card' });
+            }
+        };
+    }
+
+    container.classList.add('active');
+    if (window.playBunkerSFX) window.playBunkerSFX('alarm'); // Звук привлечения внимания
+
+    // --- НОВОЕ: АВТОМАТИЧЕСКОЕ ЗАКРЫТИЕ ЧЕРЕЗ 5 СЕКУНД ---
+    tableCardTimeout = setTimeout(() => {
+        window.hideTableCard();
+    }, 5000);
+};
+
+window.hideTableCard = function() {
+    const container = document.getElementById('table-card-presentation');
+    if (container) container.classList.remove('active');
+    
+    // Очищаем таймер при ручном закрытии
+    if (tableCardTimeout) {
+        clearTimeout(tableCardTimeout);
+        tableCardTimeout = null;
+    }
+};
 
 async function loadPublicRooms() {
     if (!screens.lobby.classList.contains('active')) return;
@@ -302,8 +381,12 @@ async function createRoom() {
         }
     }
 
-    const survivorsLimit = parseInt(document.getElementById('setting-survivors').value);
-    fullLoreText += `\n\n📌 МЕСТ В БУНКЕРЕ (КВОТА ВЫЖИВШИХ): ${survivorsLimit} чел.`;
+    // Генерируем состояние бункера при создании комнаты
+    if (typeof generateBunkerConditions === 'function') {
+        fullLoreText += generateBunkerConditions();
+    }
+    
+    // Квоту выживших добавим позже, при старте игры!
 
     
     document.getElementById('room-settings-modal').classList.remove('active');
@@ -318,7 +401,8 @@ async function createRoom() {
         max_players: maxPlayers,
         is_private: isPrivate,
         require_approval: requireApproval,
-        lore: fullLoreText
+        lore: fullLoreText,
+        survivors_limit: 0 // Временно 0, система посчитает при старте
     }]).select().single();
 
     if (error) {
@@ -444,6 +528,12 @@ function startSync() {
                     window.spawnReaction(payload.targetId, payload.emoji, payload.senderName);
                 }
             }
+        })
+        .on('broadcast', { event: 'show_table_card' }, ({ payload }) => {
+            window.displayTableCard(payload);
+        })
+        .on('broadcast', { event: 'hide_table_card' }, () => {
+            window.hideTableCard();
         })
         .subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
@@ -641,34 +731,73 @@ async function fetchGameState() {
         if (isHost) {
             document.getElementById('start-vote-btn').style.display = room.voting_active ? 'none' : 'block';
             document.getElementById('end-vote-btn').style.display = room.voting_active ? 'block' : 'none';
+            // --- НОВОЕ: ПОКАЗЫВАЕМ КНОПКУ ДОСРОЧНОГО ФИНАЛА ---
+            const forceEndBtn = document.getElementById('force-end-game-btn');
+            if (forceEndBtn) forceEndBtn.style.display = room.voting_active ? 'none' : 'block';
         }
+    }
+
+    // --- ОБРАБОТКА СТАДИИ ЭПИЛОГА ---
+    if (room.status === 'epilogue') {
+        document.getElementById('epilogue-modal').classList.add('active');
+        
+        if (isHost) {
+            document.getElementById('epilogue-host-view').style.display = 'flex';
+            document.getElementById('epilogue-player-view').style.display = 'none';
+            
+            // 1. Заполняем правую колонку (Лор и Условия)
+            document.getElementById('epi-bunker-lore').textContent = room.lore;
+            
+            // 2. Заполняем левую колонку (Выжившие и их карты)
+            const survivorsListEl = document.getElementById('epi-survivors-list');
+            const survivors = players.filter(p => p.is_alive);
+            
+            if (survivors.length === 0) {
+                survivorsListEl.innerHTML = '<div style="text-align:center; color:#ef4444; margin-top:20px;">ВСЕ МЕРТВЫ</div>';
+            } else {
+                survivorsListEl.innerHTML = survivors.map(p => {
+                    let traitsHtml = '';
+                    if (p.revealed_cards && p.revealed_cards.length > 0) {
+                        traitsHtml = p.revealed_cards.map(c => `<div class="epi-survivor-trait"><span>${c.key}:</span> ${c.value}</div>`).join('');
+                    } else {
+                        traitsHtml = '<div class="epi-survivor-trait" style="color:#555;">Нет открытых данных</div>';
+                    }
+                    return `
+                        <div class="epi-survivor-card">
+                            <div class="epi-survivor-name">${p.username}</div>
+                            ${traitsHtml}
+                        </div>
+                    `;
+                }).join('');
+            }
+        } else {
+            document.getElementById('epilogue-host-view').style.display = 'none';
+            document.getElementById('epilogue-player-view').style.display = 'block';
+        }
+    } else {
+        const epiModal = document.getElementById('epilogue-modal');
+        if (epiModal) epiModal.classList.remove('active');
     }
 
     if (room.status === 'finished') {
         const gameOverModal = document.getElementById('game-over-modal');
-        
         
         if (!gameOverModal.classList.contains('active')) {
             window.playBunkerSFX('survive');
         }
         
         const winnerMsg = document.getElementById('winner-msg');
-        
-        
         const survivors = players.filter(p => p.is_alive).map(p => p.username).join(', ');
         
-        if (survivors.length > 0) {
-            winnerMsg.textContent = `МЕСТО В БУНКЕРЕ ЗАСЛУЖИЛ(И): ${survivors}`;
+        // Показываем сгенерированный текст эпилога (если он есть), иначе стандартный текст
+        if (room.epilogue_text) {
+            winnerMsg.innerHTML = `<div style="color: #10b981; margin-bottom: 15px; font-weight: bold;">ВЫЖИВШИЕ: ${survivors}</div><div style="text-align: left; background: rgba(0,0,0,0.5); padding: 15px; border-left: 3px solid #a855f7; border-radius: 4px;">${room.epilogue_text}</div>`;
         } else {
-            winnerMsg.textContent = `ВСЕ ПОГИБЛИ. БУНКЕР ПУСТ.`;
+            winnerMsg.textContent = survivors.length > 0 ? `МЕСТО В БУНКЕРЕ ЗАСЛУЖИЛ(И): ${survivors}` : `ВСЕ ПОГИБЛИ. БУНКЕР ПУСТ.`;
         }
 
         gameOverModal.classList.add('active');
-
-        
-        if (isHost) {
-            document.getElementById('restart-room-btn').style.display = 'block';
-        }
+        if (isHost) document.getElementById('restart-room-btn').style.display = 'block';
     } else {
         document.getElementById('game-over-modal').classList.remove('active');
     }
@@ -779,8 +908,17 @@ async function checkExistingRoom() {
         if (rError) console.error("Ошибка поиска комнаты:", rError);
 
         if (room && (room.status === 'waiting' || room.status === 'playing')) {
+            const lastActive = new Date(room.last_active);
+            const now = new Date();
+            const diffInMinutes = (now - lastActive) / 1000 / 60;
+
+            if (diffInMinutes > 60) {
+                const btn = document.getElementById('reconnect-room-btn');
+                if (btn) btn.style.display = 'none';
+                return;
+            }
+
             console.log(`Найдена активная комната для возврата: #${room.room_code} (Статус: ${room.status})`);
-            
             
             if (screens.lobby.classList.contains('active')) {
                 const btn = document.getElementById('reconnect-room-btn');
@@ -857,16 +995,22 @@ async function startGame() {
     startGameBtn.disabled = true;
     startGameBtn.textContent = "ГЕНЕРАЦИЯ...";
 
-    
+    // Получаем всех игроков, которые реально зашли в комнату
     const { data: players } = await supabase.from('bunker_players').select('id').eq('room_id', currentRoomId);
     
-    
+    // --- АВТОМАТИЧЕСКИЙ РАСЧЕТ ВЫЖИВШИХ ---
+    // Выживает ровно половина (округление вниз). Минимум 1 человек.
+    const actualPlayerCount = players.length;
+    const survivorsLimit = Math.max(1, Math.floor(actualPlayerCount / 2)); 
     
     for (const player of players) {
         const generatedCards = {
             profession: getRandomItem(BUNKER_DATA.professions),
             health: getRandomItem(BUNKER_DATA.health),
             biology: getRandomItem(BUNKER_DATA.biology),
+            body: getRandomItem(BUNKER_DATA.body),
+            character: getRandomItem(BUNKER_DATA.character),
+            habit: getRandomItem(BUNKER_DATA.habit),
             hobby: getRandomItem(BUNKER_DATA.hobbies),
             phobia: getRandomItem(BUNKER_DATA.phobias),
             baggage: getRandomItem(BUNKER_DATA.baggage),
@@ -874,7 +1018,6 @@ async function startGame() {
             special1: getRandomItem(BUNKER_DATA.specials)
         };
 
-        
         await supabase.from('bunker_players')
             .update({ 
                 cards: generatedCards, 
@@ -886,8 +1029,17 @@ async function startGame() {
             .eq('id', player.id);
     }
 
+    // Получаем текущий лор и дописываем в него рассчитанную квоту выживших
+    const { data: roomData } = await supabase.from('bunker_rooms').select('lore').eq('id', currentRoomId).single();
+    const updatedLore = roomData.lore + `\n\n📌 МЕСТ В БУНКЕРЕ (КВОТА ВЫЖИВШИХ): ${survivorsLimit} чел. (из ${actualPlayerCount})`;
+
+    // Обновляем комнату: меняем статус, сохраняем лимит и обновленный лор
+    await supabase.from('bunker_rooms').update({ 
+        status: 'playing',
+        survivors_limit: survivorsLimit,
+        lore: updatedLore
+    }).eq('id', currentRoomId);
     
-    await supabase.from('bunker_rooms').update({ status: 'playing' }).eq('id', currentRoomId);
     window.playBunkerSFX('start');
     if (window.usedSpecials) window.usedSpecials.clear();
 }
@@ -1034,7 +1186,13 @@ async function endVotingProcess() {
                 window.playBunkerSFX('kick');
                 
                 const aliveCount = allPlayers.filter(p => p.is_alive && p.user_id !== loserId).length;
-                const newStatus = aliveCount <= 1 ? 'finished' : 'playing';
+                
+                // Получаем лимит выживших из БД
+                const { data: currentRoomData } = await supabase.from('bunker_rooms').select('survivors_limit').eq('id', currentRoomId).single();
+                const limit = currentRoomData ? currentRoomData.survivors_limit : 1;
+
+                // Если выживших осталось столько же, сколько мест в бункере (или меньше) — переходим к ЭПИЛОГУ
+                const newStatus = aliveCount <= limit ? 'epilogue' : 'playing';
                 
                 await supabase.from('bunker_rooms').update({ 
                     status: newStatus, 
@@ -1149,8 +1307,31 @@ window.animateAndReveal = function(cardKey, cardValue, cardElement) {
         }
 
         
+        // ЗАМЕНИ СТАРЫЙ setTimeout В КОНЦЕ animateAndReveal НА ЭТОТ:
         setTimeout(() => { 
             animCard.remove(); 
+            
+            // --- НОВАЯ ЛОГИКА: ФИКСИРУЕМ КАРТУ НА СТОЛЕ ---
+            const myName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || "Игрок";
+            const payload = {
+                userId: currentUser.id,
+                userName: myName,
+                cardKey: cardKey,
+                cardValue: cardValue
+            };
+            
+            // Показываем у себя
+            window.displayTableCard(payload);
+            
+            // Отправляем всем остальным за столом
+            if (realtimeChannel) {
+                realtimeChannel.send({
+                    type: 'broadcast',
+                    event: 'show_table_card',
+                    payload: payload
+                });
+            }
+            
             fetchGameState(); 
         }, 1200);
     }, 'bunker_skip_reveal_confirm');
@@ -1170,67 +1351,116 @@ window.rejectPlayer = async function(playerId) {
 
 
 
+/** 
+ * УНИФИЦИРОВАННАЯ СИСТЕМА МУЗЫКИ БУНКЕРА
+ */
 const bunkerTracks = [
-    new Audio('../assets/bunker-bg1.mp3'),
-    new Audio('../assets/bunker-bg2.mp3')
+    '../assets/bunker-bg1.mp3',
+    '../assets/bunker-bg2.mp3'
 ];
 
 let currentTrackIndex = 0;
-let isBunkerMuted = localStorage.getItem('bunker_muted') === 'true';
+let bunkerMusic = null;
+let bunkerMusicVolume = localStorage.getItem('bunker_music_vol') !== null 
+    ? parseFloat(localStorage.getItem('bunker_music_vol')) 
+    : 0.1;
+
+let isMusicMuted = localStorage.getItem('bunker_music_muted') === 'true';
 
 function initBunkerMusic() {
-    const muteBtn = document.getElementById('bunker-mute-btn');
-    if (!muteBtn) return;
-    
-    const icon = muteBtn.querySelector('i');
+    bunkerMusic = new Audio(bunkerTracks[currentTrackIndex]);
+    bunkerMusic.volume = isMusicMuted ? 0 : bunkerMusicVolume;
+    bunkerMusic.addEventListener('ended', playNextTrack);
 
-    
-    bunkerTracks.forEach(track => {
-        track.volume = 0.05; 
-        track.addEventListener('ended', playNextTrack);
-    });
+    const musicSlider = document.getElementById('bunker-music-slider');
+    const muteBtn = document.getElementById('bunker-mute-btn');
+    const musicIcon = document.getElementById('music-icon');
+    const musicVolVal = document.getElementById('music-vol-val');
+
+    if (musicSlider) {
+        musicSlider.value = bunkerMusicVolume;
+        musicSlider.addEventListener('input', (e) => {
+            bunkerMusicVolume = parseFloat(e.target.value);
+            if (bunkerMusicVolume > 0) isMusicMuted = false;
+            updateMusicState();
+            syncMusicUI();
+        });
+
+        // Поддержка колесика мыши
+        musicSlider.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const step = 0.05;
+            const delta = e.deltaY < 0 ? step : -step;
+            let newVal = Math.min(1, Math.max(0, bunkerMusicVolume + delta));
+            bunkerMusicVolume = newVal;
+            musicSlider.value = bunkerMusicVolume;
+            if (bunkerMusicVolume > 0) isMusicMuted = false;
+            updateMusicState();
+            syncMusicUI();
+        }, { passive: false });
+    }
+
+    if (muteBtn) {
+        muteBtn.addEventListener('click', () => {
+            isMusicMuted = !isMusicMuted;
+            if (!isMusicMuted) {
+                bunkerMusic.play().catch(() => {});
+            } else {
+                bunkerMusic.pause();
+            }
+            updateMusicState();
+            syncMusicUI();
+        });
+    }
 
     function playNextTrack() {
         currentTrackIndex = (currentTrackIndex + 1) % bunkerTracks.length;
-        if (!isBunkerMuted) {
-            bunkerTracks[currentTrackIndex].play().catch(() => {});
-        }
+        bunkerMusic.src = bunkerTracks[currentTrackIndex];
+        bunkerMusic.volume = isMusicMuted ? 0 : bunkerMusicVolume;
+        if (!isMusicMuted) bunkerMusic.play().catch(() => {});
     }
 
-    function updateMusicUI() {
-        if (isBunkerMuted) {
-            icon.className = 'fas fa-volume-mute';
+    function updateMusicState() {
+        if (bunkerMusic) {
+            bunkerMusic.volume = isMusicMuted ? 0 : bunkerMusicVolume;
+        }
+        localStorage.setItem('bunker_music_vol', bunkerMusicVolume);
+        localStorage.setItem('bunker_music_muted', isMusicMuted);
+    }
+
+    function syncMusicUI() {
+        if (!muteBtn || !musicIcon) return;
+        
+        if (isMusicMuted || bunkerMusicVolume === 0) {
+            muteBtn.innerHTML = '<i class="fas fa-play"></i>';
             muteBtn.style.color = '#ef4444';
-            muteBtn.style.borderColor = '#ef4444';
-            bunkerTracks[currentTrackIndex].pause();
+            muteBtn.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+            musicIcon.className = 'fas fa-volume-mute';
+            musicIcon.style.color = '#ef4444';
         } else {
-            icon.className = 'fas fa-music';
-            muteBtn.style.color = '#10b981';
-            muteBtn.style.borderColor = '#10b981';
-            bunkerTracks[currentTrackIndex].play().catch(() => {});
+            muteBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            muteBtn.style.color = '#8b5cf6';
+            muteBtn.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+            musicIcon.className = 'fas fa-music';
+            musicIcon.style.color = '#8b5cf6';
+        }
+
+        if (musicVolVal) {
+            musicVolVal.textContent = Math.round(bunkerMusicVolume * 100) + '%';
         }
     }
 
-    
-    muteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        isBunkerMuted = !isBunkerMuted;
-        localStorage.setItem('bunker_muted', isBunkerMuted);
-        updateMusicUI();
-    });
-
-    
+    // Разблокировка аудио при первом взаимодействии
     const unlockAudio = () => {
-        if (!isBunkerMuted) {
-            bunkerTracks[currentTrackIndex].play().catch(() => {});
+        if (!isMusicMuted) {
+            bunkerMusic.play().catch(() => {});
         }
         document.removeEventListener('click', unlockAudio);
     };
     document.addEventListener('click', unlockAudio);
 
-    updateMusicUI();
+    syncMusicUI();
 }
-
 
 initBunkerMusic();
 
@@ -1374,7 +1604,7 @@ window.executeSpecialAction = async function(targetId) {
         else if (id === 'REVEAL_SPECIFIC' || id === 'REVEAL_ANY') {
             const targetRevealed = targetUserObj.revealed_cards || [];
             const keyMap = {
-                'profession': 'Профессия', 'biology': 'Биология', 'health': 'Здоровье',
+                'profession': 'Профессия', 'biology': 'Биология', 'body': 'Телосложение', 'character': 'Характер', 'habit': 'Привычка', 'health': 'Здоровье',
                 'hobby': 'Хобби', 'phobia': 'Фобия', 'baggage': 'Багаж', 'fact': 'Факт'
             };
             const unrevealedKeys = Object.keys(keyMap).filter(k => {
@@ -1394,9 +1624,9 @@ window.executeSpecialAction = async function(targetId) {
         }
         else if (id === 'SWAP_HIDDEN') {
             const myCards = meObj.cards;
-            const categories = ['profession', 'health', 'hobby', 'phobia', 'baggage', 'fact'];
+            const categories = ['profession', 'health', 'body', 'character', 'habit', 'hobby', 'phobia', 'baggage', 'fact'];
             const cat = categories[Math.floor(Math.random() * categories.length)];
-            const keyMap = { 'profession': 'Профессия', 'health': 'Здоровье', 'hobby': 'Хобби', 'phobia': 'Фобия', 'baggage': 'Багаж', 'fact': 'Факт' };
+            const keyMap = { 'profession': 'Профессия', 'health': 'Здоровье', 'body': 'Телосложение', 'character': 'Характер', 'habit': 'Привычка', 'hobby': 'Хобби', 'phobia': 'Фобия', 'baggage': 'Багаж', 'fact': 'Факт' };
             
             const myVal = myCards[cat];
             const targetVal = tCards[cat];
@@ -1431,7 +1661,7 @@ window.executeSpecialAction = async function(targetId) {
         else if (id === 'XRAY') {
             const targetCards = targetUserObj.cards;
             const targetRevealed = targetUserObj.revealed_cards || [];
-            const keyMap = { 'profession': 'Профессия', 'biology': 'Биология', 'health': 'Здоровье', 'hobby': 'Хобби', 'phobia': 'Фобия', 'baggage': 'Багаж', 'fact': 'Факт' };
+            const keyMap = { 'profession': 'Профессия', 'biology': 'Биология', 'body': 'Телосложение', 'character': 'Характер', 'habit': 'Привычка', 'health': 'Здоровье', 'hobby': 'Хобби', 'phobia': 'Фобия', 'baggage': 'Багаж', 'fact': 'Факт' };
             const unrevealedKeys = Object.keys(keyMap).filter(k => !targetRevealed.some(r => r.key === keyMap[k]));
             if (unrevealedKeys.length > 0) {
                 const k = unrevealedKeys[Math.floor(Math.random() * unrevealedKeys.length)];
@@ -1584,7 +1814,6 @@ function initSfxMixer() {
             const val = parseFloat(e.target.value);
             updateSfxVolume(val);
             
-            
             const sfxVolVal = document.getElementById('sfx-vol-val');
             if (sfxVolVal) sfxVolVal.textContent = Math.round(val * 100) + '%';
 
@@ -1596,6 +1825,27 @@ function initSfxMixer() {
                 sfxIcon.style.color = '#10b981';
             }
         });
+
+        // Поддержка колесика мыши
+        sfxSlider.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const step = 0.05;
+            const delta = e.deltaY < 0 ? step : -step;
+            let newVal = Math.min(1, Math.max(0, bunkerSfxVolume + delta));
+            updateSfxVolume(newVal);
+            sfxSlider.value = newVal;
+
+            const sfxVolVal = document.getElementById('sfx-vol-val');
+            if (sfxVolVal) sfxVolVal.textContent = Math.round(newVal * 100) + '%';
+
+            if (newVal === 0) {
+                sfxIcon.className = 'fas fa-volume-mute';
+                sfxIcon.style.color = '#ef4444';
+            } else {
+                sfxIcon.className = 'fas fa-volume-up';
+                sfxIcon.style.color = '#10b981';
+            }
+        }, { passive: false });
     }
 }
 
@@ -1614,85 +1864,7 @@ initSfxMixer();
 
 
 
-let bunkerMusicVolume = localStorage.getItem('bunker_music_vol') !== null 
-    ? parseFloat(localStorage.getItem('bunker_music_vol')) 
-    : 0.1;
-
-let isMusicMuted = localStorage.getItem('bunker_music_muted') === 'true';
-const bunkerMusic = new Audio('../assets/bunker-bg-music.mp3');
-bunkerMusic.loop = true;
-
-function updateMusicVolume() {
-    if (isMusicMuted) {
-        bunkerMusic.volume = 0;
-    } else {
-        bunkerMusic.volume = bunkerMusicVolume;
-    }
-    localStorage.setItem('bunker_music_vol', bunkerMusicVolume);
-    localStorage.setItem('bunker_music_muted', isMusicMuted);
-}
-
-function initMusicMixer() {
-    const musicSlider = document.getElementById('bunker-music-slider');
-    const muteBtn = document.getElementById('bunker-mute-btn');
-    const musicIcon = document.getElementById('music-icon');
-
-    if (musicSlider) {
-        musicSlider.value = bunkerMusicVolume;
-        musicSlider.addEventListener('input', (e) => {
-            bunkerMusicVolume = parseFloat(e.target.value);
-            if (bunkerMusicVolume > 0) isMusicMuted = false;
-            updateMusicVolume();
-            syncMusicUI();
-            
-            const musicVolVal = document.getElementById('music-vol-val');
-            if (musicVolVal) musicVolVal.textContent = Math.round(bunkerMusicVolume * 100) + '%';
-        });
-    }
-
-    if (muteBtn) {
-        muteBtn.addEventListener('click', () => {
-            isMusicMuted = !isMusicMuted;
-            
-            bunkerMusic.play().catch(() => {});
-            updateMusicVolume();
-            syncMusicUI();
-        });
-    }
-
-    function syncMusicUI() {
-        if (!muteBtn || !musicIcon) return;
-        if (isMusicMuted || bunkerMusicVolume === 0) {
-            muteBtn.innerHTML = '<i class="fas fa-play"></i>'; 
-            muteBtn.style.color = '#ef4444';
-            musicIcon.className = 'fas fa-volume-mute';
-            musicIcon.style.color = '#ef4444';
-        } else {
-            muteBtn.innerHTML = '<i class="fas fa-pause"></i>'; 
-            muteBtn.style.color = '#8b5cf6';
-            musicIcon.className = 'fas fa-music';
-            musicIcon.style.color = '#8b5cf6';
-        }
-
-        const musicVolVal = document.getElementById('music-vol-val');
-        if (musicVolVal) {
-            musicVolVal.textContent = Math.round(bunkerMusicVolume * 100) + '%';
-        }
-    }
-
-    
-    updateMusicVolume();
-    syncMusicUI();
-    
-    
-    const firstInteraction = () => {
-        bunkerMusic.play().catch(() => {});
-        document.removeEventListener('click', firstInteraction);
-    };
-    document.addEventListener('click', firstInteraction);
-}
-
-initMusicMixer();
+// Инициализация микшера звуков (SFX) уже вызвана выше через initSfxMixer()
 
 
 window.playLoreAudio = function() {
@@ -1769,4 +1941,239 @@ window.sendReaction = function(targetId, emoji) {
     } else {
         console.warn("Канал связи не готов к отправке реакций.");
     }
+};
+
+// === СИСТЕМА ОБРАТНОЙ СВЯЗИ (TELEGRAM BOT) ===
+function setupFeedbackModal() {
+    const triggerBtn = document.getElementById('feedback-trigger-btn');
+    const modal = document.getElementById('feedback-modal');
+    const closeBtn = document.getElementById('close-feedback-btn');
+    const form = document.getElementById('feedback-form');
+    const statusEl = document.getElementById('feedback-status');
+
+    if (!triggerBtn || !modal || !form) return;
+
+    const TG_BOT_TOKEN = '7589435895:AAGqctK-hnYRjmBonADDUQwp8V5ZQEgdi7k';
+    const TG_CHAT_ID = '1202772510';
+
+    triggerBtn.addEventListener('click', () => {
+        modal.classList.add('active');
+        statusEl.textContent = '';
+        statusEl.style.color = '#a1a1aa';
+        
+        if (currentUser) {
+            const meta = currentUser.user_metadata;
+            const nameInput = document.getElementById('feedback-name');
+            if (nameInput) nameInput.value = meta.full_name || meta.name || "";
+        }
+    });
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { 
+        if (e.target === modal) closeModal(); 
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const submitBtn = form.querySelector('.submit-feedback-btn');
+        const name = document.getElementById('feedback-name').value;
+        const types = form.querySelectorAll('input[name="feedback-type"]');
+        let type = "ИДЕЯ";
+        types.forEach(t => { if(t.checked) type = t.value; });
+
+        const message = document.getElementById('feedback-msg').value;
+
+        submitBtn.disabled = true;
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> СИГНАЛ УХОДИТ...';
+        statusEl.textContent = '';
+
+        const text = `📬 *ПОСЛАНИЕ ИЗ БУНКЕРА!*\n\n👤 *От:* ${name}\n🏷️ *Тип:* ${type}\n📝 *Сообщение:* ${message}\n🌐 *Комната:* ${currentRoomCode || 'Lobby'}`;
+
+        try {
+            const response = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: TG_CHAT_ID,
+                    text: text,
+                    parse_mode: 'Markdown'
+                })
+            });
+
+            if (response.ok) {
+                statusEl.textContent = '✅ ПОСЛАНИЕ ДОСТАВЛЕНО В ХАБ!';
+                statusEl.style.color = '#10b981';
+                form.reset();
+                setTimeout(closeModal, 2000);
+            } else {
+                throw new Error('Signal lost');
+            }
+        } catch (err) {
+            statusEl.textContent = '❌ ОШИБКА СВЯЗИ. ПОПРОБУЙ ЕЩЕ РАЗ.';
+            statusEl.style.color = '#ef4444';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    });
+
+    // Стилизация кнопок выбора типа внутри бункера
+    const typeLabels = form.querySelectorAll('.type-btn-bunker');
+    const typeInputs = form.querySelectorAll('input[name="feedback-type"]');
+    
+    function updateTypeUI() {
+        typeInputs.forEach((input, idx) => {
+            if (input.checked) {
+                typeLabels[idx].style.background = input.value === 'ИДЕЯ' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+                typeLabels[idx].style.fontWeight = 'bold';
+            } else {
+                typeLabels[idx].style.background = 'transparent';
+                typeLabels[idx].style.fontWeight = 'normal';
+            }
+        });
+    }
+    
+    typeInputs.forEach(input => input.addEventListener('change', updateTypeUI));
+    updateTypeUI();
+}
+
+// === ПЕРЕКЛЮЧЕНИЕ ВИДА (КРУГ / ТАБЛИЦА) ===
+window.isTableView = false;
+
+window.toggleTableView = function() {
+    window.isTableView = !window.isTableView;
+    
+    const radialTable = document.getElementById('game-players-list');
+    const dataTable = document.getElementById('game-data-table');
+    const btnIcon = document.querySelector('#toggle-view-btn i');
+    
+    if (window.isTableView) {
+        // Включаем таблицу
+        radialTable.style.display = 'none';
+        dataTable.style.display = 'block';
+        btnIcon.className = 'fas fa-circle-notch'; // Меняем иконку на "Круг"
+        document.getElementById('toggle-view-btn').title = "Вид: Круглый стол";
+    } else {
+        // Включаем круглый стол
+        radialTable.style.display = 'flex';
+        dataTable.style.display = 'none';
+        btnIcon.className = 'fas fa-table'; // Меняем иконку на "Таблица"
+        document.getElementById('toggle-view-btn').title = "Вид: Сводная таблица";
+    }
+    
+    if (window.playBunkerSFX) window.playBunkerSFX('click');
+};
+
+// === СИСТЕМА ДОСЬЕ ИГРОКОВ ===
+window.openDossier = function(userId) {
+    // Ищем игрока в кэше
+    const player = window.bunkerPlayersCache ? window.bunkerPlayersCache.find(p => p.user_id === userId) : null;
+    if (!player) return;
+
+    // Заполняем шапку
+    document.getElementById('dossier-avatar').src = player.avatar_url;
+    document.getElementById('dossier-name').textContent = player.username;
+    
+    let statusText = player.is_alive ? "В ИГРЕ" : "ИЗГНАН 💀";
+    if (player.has_immunity) statusText += " | ИММУНИТЕТ 🛡️";
+    document.getElementById('dossier-status').textContent = statusText;
+    document.getElementById('dossier-status').style.color = player.is_alive ? "#10b981" : "#ef4444";
+
+    // Заполняем карты
+    const container = document.getElementById('dossier-cards');
+    if (!player.revealed_cards || player.revealed_cards.length === 0) {
+        container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #555; font-family: var(--font-pixel); font-size: 0.7rem; padding: 30px;">НЕТ ОТКРЫТЫХ ДАННЫХ</div>';
+    } else {
+        const getCardType = (label) => {
+            const types = { 'Профессия': 'profession', 'Биология': 'biology', 'Здоровье': 'health', 'Хобби': 'trait', 'Фобия': 'trait', 'Багаж': 'equipment', 'Факт': 'trait', 'Спецуха': 'special' };
+            return types[label] || 'default';
+        };
+        const getCardIcon = (label) => {
+            const icons = { 'Профессия': 'fa-user-tie', 'Биология': 'fa-dna', 'Здоровье': 'fa-heartbeat', 'Хобби': 'fa-gamepad', 'Фобия': 'fa-ghost', 'Багаж': 'fa-briefcase', 'Факт': 'fa-info-circle', 'Спецуха': 'fa-star' };
+            return icons[label] || 'fa-id-card';
+        };
+
+        container.innerHTML = player.revealed_cards.map(c => {
+            const type = getCardType(c.key);
+            const icon = getCardIcon(c.key);
+            return `
+                <div class="bunker-card type-${type}" style="cursor: default;">
+                    <div class="card-key"><i class="fas ${icon}"></i> ${c.key}</div>
+                    <div class="card-value" style="font-size: 0.75rem;">${c.value}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Показываем модалку
+    document.getElementById('dossier-modal').classList.add('active');
+    if (window.playBunkerSFX) window.playBunkerSFX('click');
+};
+
+// === ГЕНЕРАТОР ФИНАЛА ИГРЫ (ОБНОВЛЕННЫЙ) ===
+window.submitEpilogue = async function() {
+    const btn = document.getElementById('submit-epilogue-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> АНАЛИЗ...';
+
+    // Собираем ответы Хоста
+    const qProblem = document.getElementById('epi-q-problem').checked; // Критично!
+    const qThreat  = document.getElementById('epi-q-threat').checked;
+    const qFood    = document.getElementById('epi-q-food').checked;    // Критично!
+    const qMed     = document.getElementById('epi-q-med').checked;
+    const qMental  = document.getElementById('epi-q-mental').checked;
+    const qRep     = document.getElementById('epi-q-rep').checked;
+
+    let epilogueText = "";
+    let isDead = false;
+
+    // ЖЕСТКАЯ ЛОГИКА ВЫЖИВАНИЯ
+    if (!qProblem) {
+        isDead = true;
+        epilogueText = "💥 <b>КАТАСТРОФИЧЕСКИЙ ПРОВАЛ:</b> Команда не смогла решить главную техническую проблему бункера. Системы жизнеобеспечения отказали. Бункер стал вашей общей стальной могилой задолго до того, как закончилась еда.";
+    } else if (!qFood) {
+        isDead = true;
+        epilogueText = "💀 <b>ГОЛОДНАЯ СМЕРТЬ:</b> Вы починили бункер, но запасы иссякли. Не имея навыков добычи пропитания, группа медленно сошла с ума от голода. Последние дни превратились в кровавую бойню за крошки.";
+    } else {
+        // Если базовые потребности решены, считаем очки качества жизни
+        let score = 0;
+        if (qThreat) score++;
+        if (qMed) score++;
+        if (qMental) score++;
+        if (qRep) score++;
+
+        if (score === 4) {
+            epilogueText = "🌟 <b>ИДЕАЛЬНОЕ ВОЗРОЖДЕНИЕ:</b> Выжившие оказались безупречной командой. Вы не только пережили катастрофу в комфорте, сохранив рассудок и здоровье, но и успешно вышли на поверхность, основав новую колонию. Человечество спасено!";
+        } else if (score >= 2) {
+            epilogueText = "🏕️ <b>ТЯЖЕЛОЕ ВЫЖИВАНИЕ:</b> Годы в бункере дались нелегко. Были болезни, нервные срывы и потери, но ядро группы выстояло. Вы вышли на поверхность истощенными, но живыми. У человечества есть шанс.";
+        } else {
+            epilogueText = "🏚️ <b>МРАЧНОЕ СУЩЕСТВОВАНИЕ:</b> Вы выжили физически, но потеряли человеческий облик. Без медицины и психологической поддержки бункер превратился в сумасшедший дом. Те, кто в итоге вышел на поверхность, больше напоминали диких зверей, чем спасителей человечества.";
+        }
+    }
+
+    // Добавляем детали по отсутствующим навыкам (если выжили, но с потерями)
+    if (!isDead) {
+        let details = "<br><br><span style='color: #ef4444; font-size: 0.8rem;'>Проблемы, с которыми столкнулась группа:</span><ul style='margin-top: 5px; padding-left: 20px; font-size: 0.8rem; color: #a1a1aa;'>";
+        let hasDetails = false;
+        
+        if (!qThreat) { details += "<li>Выход на поверхность обернулся кошмаром из-за неготовности к внешним угрозам.</li>"; hasDetails = true; }
+        if (!qMed) { details += "<li>Отсутствие медицины привело к тяжелым осложнениям от простых инфекций.</li>"; hasDetails = true; }
+        if (!qMental) { details += "<li>Психологическое давление сломало нескольких членов команды, приведя к паранойе.</li>"; hasDetails = true; }
+        if (!qRep) { details += "<li>Группа выжила, но продолжить род некому. Вы — последнее поколение людей.</li>"; hasDetails = true; }
+        details += "</ul>";
+
+        if (hasDetails) epilogueText += details;
+    }
+
+    // Сохраняем в БД и переводим игру в статус finished
+    await supabase.from('bunker_rooms').update({ 
+        status: 'finished',
+        epilogue_text: epilogueText
+    }).eq('id', currentRoomId);
 };

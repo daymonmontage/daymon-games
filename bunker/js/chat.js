@@ -141,6 +141,14 @@ export function initChat(supabase, playSFX) {
         `;
 
         chatMessagesEl.appendChild(msgEl);
+        
+        // --- НОВОЕ: ОГРАНИЧЕНИЕ ДО 10 СООБЩЕНИЙ ---
+        const allMessages = chatMessagesEl.querySelectorAll('.chat-msg:not(.system)');
+        if (allMessages.length > 10) {
+            allMessages[0].remove(); // Удаляем самое старое (верхнее) сообщение
+        }
+        // -----------------------------------------
+
         chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
     }
 
@@ -185,15 +193,15 @@ export function initChat(supabase, playSFX) {
             .from('bunker_chat')
             .select('*')
             .eq('room_id', roomId)
-            .order('created_at', { ascending: true })
-            .limit(50);
+            .order('created_at', { ascending: false })
+            .limit(10);
             
         
         if (activeRoomId !== roomId) return;
             
         chatMessagesEl.innerHTML = '';
         if (msgs && msgs.length > 0) {
-            msgs.forEach(appendMessage);
+            msgs.reverse().forEach(appendMessage);
         } else {
              chatMessagesEl.innerHTML = `
                 <div class="chat-msg system">
@@ -250,15 +258,15 @@ export function initChat(supabase, playSFX) {
         const { data: msgs } = await supabase
             .from('bunker_global_chat')
             .select('*')
-            .order('created_at', { ascending: true })
-            .limit(50);
+            .order('created_at', { ascending: false })
+            .limit(10);
             
         
         if (activeRoomId !== 'global') return;
             
         chatMessagesEl.innerHTML = '';
         if (msgs && msgs.length > 0) {
-            msgs.forEach(appendMessage);
+            msgs.reverse().forEach(appendMessage);
         } else {
              chatMessagesEl.innerHTML = `
                 <div class="chat-msg system">

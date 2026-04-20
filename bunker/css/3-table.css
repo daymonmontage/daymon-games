@@ -226,78 +226,48 @@
 
 
 
-.seat-revealed-cards-radial {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    z-index: 50; 
+/* ИНДИКАТОРЫ ВСКРЫТЫХ КАРТ (ТОЧКИ ПОД НИКОМ) */
+.seat-revealed-dots {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    margin-top: 5px;
+    pointer-events: none;
 }
 
-.mini-board-card {
-    background: rgba(26, 26, 29, 0.95);
-    border: 1px solid #333;
-    border-radius: 4px;
-    padding: 4px;
-    text-align: center;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.8);
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    cursor: pointer;
-    position: relative;
-    z-index: 10;
+.dot-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.8);
+    box-shadow: 0 0 5px currentColor;
 }
 
-.radial-card {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: var(--card-width, 75px) !important;
-    
-    transform: translate(-50%, -50%) rotate(var(--card-angle)) translateY(var(--card-radius)) rotate(calc(-1 * var(--card-angle)));
-}
+/* Цвета точек в зависимости от типа карты */
+.dot-profession { color: #3b82f6; background: #3b82f6; }
+.dot-biology   { color: #10b981; background: #10b981; }
+.dot-body      { color: #ec4899; background: #ec4899; }
+.dot-character { color: #f97316; background: #f97316; }
+.dot-habit     { color: #b91c1c; background: #b91c1c; }
+.dot-health    { color: #fbbf24; background: #fbbf24; }
+.dot-trait     { color: #a855f7; background: #a855f7; }
+.dot-equipment { color: #ef4444; background: #ef4444; }
+.dot-special   { color: #f59e0b; background: #f59e0b; }
+.dot-default   { color: #fff;    background: #fff; }
 
-.mini-board-card:hover {
-    z-index: 100 !important;
+/* Кнопка досье в социальном меню */
+.dossier-btn {
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #60a5fa;
 }
-
-.radial-card:hover {
-    z-index: 500 !important;
-    transform: translate(-50%, -50%) rotate(var(--card-angle)) translateY(calc(var(--card-radius) + 15px)) rotate(calc(-1 * var(--card-angle))) scale(1.7);
-    border-color: #fff !important;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.9), 0 0 15px rgba(255,255,255,0.2);
-}
-
-.mbc-key {
-    font-family: var(--font-pixel);
-    font-size: 0.35rem;
-    margin-bottom: 4px;
-    text-transform: uppercase;
-}
-
-.mbc-val {
-    font-family: var(--font-main);
-    font-size: 0.55rem;
+.dossier-btn:hover {
+    background: #3b82f6;
+    border-color: #3b82f6;
     color: #fff;
-    line-height: 1.2;
-    word-wrap: break-word;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
 }
-
-
-.mini-board-card.type-biology { border-color: #10b981; }
-.mini-board-card.type-biology .mbc-key { color: #10b981; }
-
-.mini-board-card.type-health { border-color: #fbbf24; }
-.mini-board-card.type-health .mbc-key { color: #fbbf24; }
-
-.mini-board-card.type-profession { border-color: #3b82f6; }
-.mini-board-card.type-profession .mbc-key { color: #3b82f6; }
-
-.mini-board-card.type-trait { border-color: #a855f7; }
-.mini-board-card.type-trait .mbc-key { color: #a855f7; }
-
-.mini-board-card.type-equipment { border-color: #ef4444; }
-.mini-board-card.type-equipment .mbc-key { color: #ef4444; }
 
 
 
@@ -537,4 +507,162 @@
     border-radius: 4px;
     white-space: nowrap;
     box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+/* === ПРЕЗЕНТАЦИЯ КАРТЫ В ЦЕНТРЕ СТОЛА === */
+.table-card-presentation {
+    position: absolute;
+    /* Центрируем относительно стола */
+    top: 50%;
+    left: 40%; /* Центрируем по середине */
+    transform: translate(-50%, -50%) scale(0);
+    z-index: 1000;
+    background: rgba(15, 15, 17, 0.95);
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    padding: 20px;
+    width: 260px;
+    box-shadow: 0 0 50px rgba(0,0,0,0.9), 0 0 30px rgba(59, 130, 246, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(10px);
+}
+
+@media (max-width: 1200px) {
+    .table-card-presentation { left: 50%; }
+}
+
+.table-card-presentation.active {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.tcp-header {
+    font-family: var(--font-pixel);
+    font-size: 0.6rem;
+    color: #a1a1aa;
+    text-align: center;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.tcp-player-name {
+    color: #10b981;
+    font-size: 0.7rem;
+}
+
+.tcp-close-btn {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: #fff;
+    border: 2px solid #0f0f11;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: none; /* Показывается только владельцу и хосту через JS */
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+    transition: 0.2s;
+    z-index: 10;
+}
+
+.tcp-close-btn:hover {
+    transform: scale(1.15) rotate(90deg);
+    background: #dc2626;
+}
+
+/* === СВОДНАЯ ТАБЛИЦА ИГРОКОВ === */
+.bunker-data-table-container {
+    width: 100%;
+    max-width: 650px;
+    height: min(90vw, 65vh);
+    max-height: 650px;
+    margin: 0 auto;
+    background: rgba(15, 15, 17, 0.95);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(59, 130, 246, 0.05);
+    overflow-x: auto;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+/* Кастомный скроллбар для таблицы */
+.bunker-data-table-container::-webkit-scrollbar { width: 6px; height: 6px; }
+.bunker-data-table-container::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 3px; }
+.bunker-data-table-container::-webkit-scrollbar-corner { background: transparent; }
+
+.bunker-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-main);
+    font-size: 0.75rem;
+    color: #d1d5db;
+    text-align: left;
+    min-width: 800px; /* Чтобы на мобилках скроллилось, а не сжималось в кашу */
+}
+
+.bunker-data-table th {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    font-family: var(--font-pixel);
+    font-size: 0.5rem;
+    padding: 15px 10px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 2px solid rgba(59, 130, 246, 0.4);
+    white-space: nowrap;
+    backdrop-filter: blur(5px);
+}
+
+.bunker-data-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    vertical-align: middle;
+    line-height: 1.4;
+}
+
+.bunker-data-table tr:hover td {
+    background: rgba(255,255,255,0.05);
+}
+
+.bunker-data-table tr.dead td {
+    opacity: 0.4;
+    text-decoration: line-through;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.td-hidden {
+    color: #555;
+    font-style: italic;
+    text-align: center;
+    letter-spacing: 2px;
+}
+
+.td-player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.td-player img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #555;
 }

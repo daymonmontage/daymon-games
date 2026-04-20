@@ -47,6 +47,14 @@
                 <button id="hub-mute-btn" class="icon-btn" title="Звук">
                     <i class="fas fa-volume-up"></i>
                 </button>
+                <div class="hub-volume-mixer">
+                    <input type="range" id="hub-volume-slider" min="0" max="1" step="0.01" value="0.10">
+                    <span id="hub-vol-val">10%</span>
+                </div>
+                <button id="feedback-trigger-btn" class="icon-btn mailbox-btn" title="Идеи и баги">
+                    <i class="fas fa-envelope-open-text"></i>
+                    <span class="btn-glow"></span>
+                </button>
             </div>
         </div>
         
@@ -162,6 +170,46 @@
                 <span class="rgb-desc">ВЕРНУТЬСЯ В БУНКЕР</span>
             </div>
         </a>
+    </div>
+    
+    <!-- Модальное окно предложений/багов -->
+    <div id="feedback-modal" class="lb-modal-overlay">
+        <div class="lb-modal-content feedback-modal-content">
+            <div class="lb-modal-header">
+                <h2>ПОЧТОВЫЙ ЯЩИК</h2>
+                <button id="close-feedback-btn" class="close-modal-btn">&times;</button>
+            </div>
+            <div class="lb-modal-body">
+                <p class="feedback-desc">Есть крутая идея или нашел досадный баг? Напиши мне!</p>
+                <form id="feedback-form" class="feedback-form">
+                    <div class="form-group">
+                        <label>КТО ТЫ, ВОИН?</label>
+                        <input type="text" id="feedback-name" placeholder="Твое имя или ник" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ТЕМА ПОСЛАНИЯ</label>
+                        <div class="type-selector">
+                            <label class="type-opt">
+                                <input type="radio" name="feedback-type" value="ИДЕЯ" checked>
+                                <span class="type-btn idea"><i class="fas fa-lightbulb"></i> ИДЕЯ</span>
+                            </label>
+                            <label class="type-opt">
+                                <input type="radio" name="feedback-type" value="БАГ">
+                                <span class="type-btn bug"><i class="fas fa-bug"></i> БАГ</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>СУТЬ ДЕЛА</label>
+                        <textarea id="feedback-msg" placeholder="Опиши свои мысли как можно подробнее..." required></textarea>
+                    </div>
+                    <button type="submit" class="play-btn submit-feedback-btn">
+                        <i class="fas fa-paper-plane"></i> ОТПРАВИТЬ ПОСЛАНИЕ
+                    </button>
+                    <div id="feedback-status" class="feedback-status"></div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="script.js"></script>

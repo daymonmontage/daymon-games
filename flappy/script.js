@@ -60,12 +60,37 @@ function initVolumeControls() {
         updateMuteIcons();
     });
 
+    // Колесико мыши для музыки
+    musicSlider.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const step = 0.05;
+        const delta = e.deltaY < 0 ? step : -step;
+        musicVolume = Math.min(1, Math.max(0, musicVolume + delta));
+        musicSlider.value = musicVolume;
+        bgMusic.volume = musicVolume;
+        if (musicVolume > 0) lastMusicVol = musicVolume;
+        localStorage.setItem('flappy_music_vol', musicVolume);
+        updateMuteIcons();
+    }, { passive: false });
+
     sfxSlider.addEventListener('input', (e) => {
         sfxVolume = parseFloat(e.target.value);
         if (sfxVolume > 0) lastSfxVol = sfxVolume;
         localStorage.setItem('flappy_sfx_vol', sfxVolume);
         updateMuteIcons();
     });
+
+    // Колесико мыши для SFX
+    sfxSlider.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const step = 0.05;
+        const delta = e.deltaY < 0 ? step : -step;
+        sfxVolume = Math.min(1, Math.max(0, sfxVolume + delta));
+        sfxSlider.value = sfxVolume;
+        if (sfxVolume > 0) lastSfxVol = sfxVolume;
+        localStorage.setItem('flappy_sfx_vol', sfxVolume);
+        updateMuteIcons();
+    }, { passive: false });
 
     musicIcon.addEventListener('click', () => {
         if (musicVolume > 0) {

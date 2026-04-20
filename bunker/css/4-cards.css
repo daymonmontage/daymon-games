@@ -63,6 +63,9 @@
 
 .bunker-card.type-profession { --card-color: #3b82f6; }
 .bunker-card.type-biology   { --card-color: #10b981; }
+.bunker-card.type-body      { --card-color: #ec4899; }
+.bunker-card.type-character { --card-color: #f97316; }
+.bunker-card.type-habit     { --card-color: #b91c1c; }
 .bunker-card.type-health    { --card-color: #fbbf24; }
 .bunker-card.type-trait     { --card-color: #a855f7; }
 .bunker-card.type-equipment { --card-color: #ef4444; }

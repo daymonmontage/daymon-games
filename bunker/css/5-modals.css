@@ -167,3 +167,176 @@
 .appr-yes:hover { background: #10b981; color: #000; box-shadow: 0 0 10px #10b981; }
 .appr-no { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
 .appr-no:hover { background: #ef4444; color: #000; box-shadow: 0 0 10px #ef4444; }
+
+/* === СТИЛИ ДЛЯ ОПРОСНИКА ЭПИЛОГА === */
+.epilogue-q-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.epilogue-q-label:hover {
+    background: rgba(168, 85, 247, 0.1);
+    border-color: rgba(168, 85, 247, 0.3);
+}
+
+.eq-text {
+    font-family: var(--font-main);
+    font-size: 0.8rem;
+    color: #d1d5db;
+    max-width: 80%;
+    line-height: 1.4;
+}
+
+.eq-checkbox {
+    display: none;
+}
+
+.eq-toggle {
+    width: 40px;
+    height: 20px;
+    background: #333;
+    border-radius: 10px;
+    position: relative;
+    transition: 0.3s;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+}
+
+.eq-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.eq-checkbox:checked + .eq-toggle {
+    background: #a855f7;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+.eq-checkbox:checked + .eq-toggle::after {
+    left: 22px;
+}
+
+/* === НОВЫЙ ДИЗАЙН ЭПИЛОГА === */
+.epilogue-modal-wide {
+    max-width: 1200px !important;
+    width: 95% !important;
+    height: 85vh;
+    background: #0a0a0c !important;
+    border: 2px solid #a855f7 !important;
+    box-shadow: 0 0 50px rgba(168, 85, 247, 0.3) !important;
+    display: flex;
+    flex-direction: column;
+    padding: 20px !important;
+}
+
+.epilogue-main-title {
+    color: #a855f7;
+    font-family: var(--font-pixel);
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+.epilogue-layout {
+    display: flex;
+    gap: 20px;
+    flex-grow: 1;
+    min-height: 0; /* Важно для скролла внутри колонок */
+}
+
+.epi-panel {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.epi-left, .epi-right {
+    flex: 1;
+    max-width: 300px;
+}
+
+.epi-center {
+    flex: 2;
+    background: rgba(0, 0, 0, 0.5);
+    border-color: #a855f7;
+    box-shadow: inset 0 0 20px rgba(168, 85, 247, 0.1);
+}
+
+.epi-panel-title {
+    color: #d8b4fe;
+    font-family: var(--font-pixel);
+    font-size: 0.7rem;
+    text-align: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed rgba(168, 85, 247, 0.3);
+}
+
+.epi-scroll-area {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.epi-scroll-area::-webkit-scrollbar { width: 4px; }
+.epi-scroll-area::-webkit-scrollbar-thumb { background: #a855f7; border-radius: 4px; }
+
+.epi-hint {
+    color: #a1a1aa;
+    font-size: 0.75rem;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.epi-questions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+    overflow-y: auto;
+}
+
+/* Мини-карточки выживших слева */
+.epi-survivor-card {
+    background: rgba(0,0,0,0.5);
+    border-left: 3px solid #10b981;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+.epi-survivor-name {
+    color: #10b981;
+    font-weight: bold;
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+}
+.epi-survivor-trait {
+    font-size: 0.7rem;
+    color: #ccc;
+    margin-bottom: 2px;
+    line-height: 1.2;
+}
+.epi-survivor-trait span { color: #8b5cf6; font-weight: bold; }
+
+@media (max-width: 1024px) {
+    .epilogue-layout { flex-direction: column; overflow-y: auto; }
+    .epi-left, .epi-right, .epi-center { max-width: 100%; flex: none; }
+    .epi-scroll-area { max-height: 200px; }
+}

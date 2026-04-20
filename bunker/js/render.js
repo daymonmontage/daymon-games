@@ -67,7 +67,7 @@ export function renderPlayersList(players, hostId, status, currentUserId, isHost
         let html = `<div class="${centerProps}">${centerInner}</div>`;
 
         const getCardType = (label) => {
-            const types = { 'Профессия': 'profession', 'Биология': 'biology', 'Здоровье': 'health', 'Хобби': 'trait', 'Фобия': 'trait', 'Багаж': 'equipment', 'Факт': 'trait' };
+            const types = { 'Профессия': 'profession', 'Биология': 'biology', 'Телосложение': 'body', 'Характер': 'character', 'Привычка': 'habit', 'Здоровье': 'health', 'Хобби': 'trait', 'Фобия': 'trait', 'Багаж': 'equipment', 'Факт': 'trait', 'Спецуха': 'special' };
             return types[label] || 'default';
         };
 
@@ -96,55 +96,27 @@ export function renderPlayersList(players, hostId, status, currentUserId, isHost
             if (canBeVoted) deadClass += ' votable';
             if (canBeTargeted) deadClass += ' targetable'; 
             
-            let onclickAttr = '';
+            // 1. Логика клика по игроку
+            let onclickAttr = `onclick="window.openDossier('${p.user_id}')"`; // По умолчанию открываем досье
             if (canBeVoted) {
-                onclickAttr = `onclick="window.castVote('${p.user_id}')"`;
+                onclickAttr = `onclick="window.castVote('${p.user_id}')"`; // Если идет голосование
             } else if (canBeTargeted) {
-                onclickAttr = `onclick="window.executeSpecialAction('${p.user_id}')"`;
+                onclickAttr = `onclick="window.executeSpecialAction('${p.user_id}')"`; // Если применяем спецуху
             }
             
             const angle = angleStep * i; 
             const transformStyle = `transform: translate(-50%, -50%) rotate(${angle}deg) translateY(-${radius}px) rotate(-${angle}deg);`;
 
+            // 2. Генерация цветных точек вместо огромных карт
             let revealedHtml = '';
             if (p.revealed_cards && p.revealed_cards.length > 0) {
-                const totalRev = p.revealed_cards.length;
-                revealedHtml = '<div class="seat-revealed-cards-radial">' + 
-                    p.revealed_cards.map((c, idx) => {
-                        let cardAngle;
-                        const maxSpan = isMobile ? 180 : 260; 
-                        if (totalRev === 1) {
-                            cardAngle = 180;
-                        } else {
-                            let span = (totalRev - 1) * (isMobile ? 35 : 50);
-                            if (span > maxSpan) span = maxSpan;
-                            const startAngle = 180 - (span / 2);
-                            const step = span / (totalRev - 1);
-                            cardAngle = startAngle + (step * idx);
-                        }
-
-                        
-                        let baseBaseRad = isMobile ? 45 : 80;
-                        let baseRadius = (totalRev > 4 && !isMobile) ? 95 : baseBaseRad;
-                        if (totalRev > 6 && !isMobile) baseRadius = 110;
-                        
-                        
-                        const cardRadius = (!isMobile && totalRev > 3 && idx % 2 !== 0) ? baseRadius + 22 : baseRadius;
-                        
-                        
-                        let cardWidth = isMobile ? 35 : (totalRev > 5 ? 65 : 75);
-
-                        return `
-                        <div class="mini-board-card radial-card type-${getCardType(c.key)}" 
-                             style="--card-angle: ${cardAngle}deg; --card-radius: ${cardRadius}px; --card-width: ${cardWidth}px; z-index: ${10 + idx};">
-                            <div class="mbc-key">${c.key}</div>
-                            <div class="mbc-val">${c.value}</div>
-                        </div>
-                        `;
+                revealedHtml = '<div class="seat-revealed-dots">' + 
+                    p.revealed_cards.map(c => {
+                        const type = getCardType(c.key);
+                        return `<div class="dot-indicator dot-${type}" title="${c.key}"></div>`;
                     }).join('') + 
                 '</div>';
             }
-
 
             let badges = '';
             if (isRoomHost) badges += '<i class="fas fa-crown" style="color:#fbbf24; font-size:0.7rem;"></i>';
@@ -164,6 +136,9 @@ export function renderPlayersList(players, hostId, status, currentUserId, isHost
                         
                         <!-- ПАНЕЛЬ СОЦИАЛЬНОГО ВЗАИМОДЕЙСТВИЯ -->
                         <div class="seat-social-actions">
+                            <button class="social-btn dossier-btn" onclick="event.stopPropagation(); window.openDossier('${p.user_id}')" title="Открыть досье">
+                                <i class="fas fa-id-badge"></i>
+                            </button>
                             <button class="social-btn whisper-btn" onclick="event.stopPropagation(); window.setWhisper('${p.username}')" title="Шепнуть">
                                 <i class="fas fa-comment-dots"></i>
                             </button>
@@ -179,6 +154,59 @@ export function renderPlayersList(players, hostId, status, currentUserId, isHost
         }).join('');
 
         if (gamePlayersListEl && gamePlayersListEl.innerHTML !== html) gamePlayersListEl.innerHTML = html;
+
+        // --- ГЕНЕРАЦИЯ СВОДНОЙ ТАБЛИЦЫ ДАННЫХ ---
+        const dataTableEl = document.getElementById('game-data-table');
+        if (dataTableEl) {
+            const columns = ['Профессия', 'Биология', 'Телосложение', 'Характер', 'Привычка', 'Здоровье', 'Хобби', 'Фобия', 'Багаж', 'Факт', 'Спецуха'];
+            
+            let tableHtml = '<table class="bunker-data-table"><thead><tr><th>ИГРОК</th>';
+            columns.forEach(col => tableHtml += `<th>${col}</th>`);
+            tableHtml += '</tr></thead><tbody>';
+            
+            players.forEach(p => {
+                const isAlive = p.is_alive;
+                const deadClass = isAlive ? '' : 'dead';
+                const isMe = p.user_id === currentUserId;
+                const nameColor = isMe ? '#10b981' : '#fff';
+                
+                // Шапка строки (Игрок)
+                tableHtml += `<tr class="${deadClass}">
+                    <td style="position: sticky; left: 0; background: ${isAlive ? '#13131a' : '#1a1010'}; z-index: 5; border-right: 1px solid rgba(255,255,255,0.1);">
+                        <div class="td-player">
+                            <img src="${p.avatar_url}" style="${isMe ? 'border-color: #10b981;' : ''}">
+                            <span style="color: ${nameColor}">${p.username}</span>
+                            ${!isAlive ? '<i class="fas fa-skull" style="color:#ef4444; font-size:0.8rem;"></i>' : ''}
+                            ${p.has_immunity ? '<i class="fas fa-shield-alt" style="color:#3b82f6; font-size:0.8rem;"></i>' : ''}
+                        </div>
+                    </td>`;
+                
+                // Собираем вскрытые карты в удобный объект
+                const revealedMap = {};
+                if (p.revealed_cards) {
+                    p.revealed_cards.forEach(c => revealedMap[c.key] = c.value);
+                }
+                
+                // Заполняем ячейки
+                columns.forEach(col => {
+                    if (revealedMap[col]) {
+                        // Если карта вскрыта — показываем текст
+                        tableHtml += `<td>${revealedMap[col]}</td>`;
+                    } else {
+                        // Если скрыта — показываем ???
+                        tableHtml += `<td class="td-hidden">???</td>`;
+                    }
+                });
+                
+                tableHtml += '</tr>';
+            });
+            
+            tableHtml += '</tbody></table>';
+            
+            if (dataTableEl.innerHTML !== tableHtml) {
+                dataTableEl.innerHTML = tableHtml;
+            }
+        }
     }
 }
 
@@ -195,6 +223,9 @@ export function renderMyCards(players, currentUserId) {
     const cardConfig = [
         { key: 'profession', label: 'Профессия', type: 'profession', icon: 'fa-user-tie' },
         { key: 'biology', label: 'Биология', type: 'biology', icon: 'fa-dna' },
+        { key: 'body', label: 'Телосложение', type: 'body', icon: 'fa-child' },
+        { key: 'character', label: 'Характер', type: 'character', icon: 'fa-masks-theater' },
+        { key: 'habit', label: 'Привычка', type: 'habit', icon: 'fa-smoking' },
         { key: 'health', label: 'Здоровье', type: 'health', icon: 'fa-heartbeat' },
         { key: 'hobby', label: 'Хобби', type: 'trait', icon: 'fa-gamepad' },
         { key: 'phobia', label: 'Фобия', type: 'trait', icon: 'fa-ghost' },
